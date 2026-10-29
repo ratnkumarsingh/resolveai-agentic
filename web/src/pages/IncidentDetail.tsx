@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api } from "../api";
+import { accessCode, api } from "../api";
 import { DeploymentsTab, LogsTab, OverviewTab, rowId } from "../components/EvidenceTabs";
 import { Findings } from "../components/Findings";
 import { RcaPanel } from "../components/RcaEditor";
@@ -27,7 +27,12 @@ export default function IncidentDetail() {
   const [focus, setFocus] = useState<{ ref: string; n: number } | null>(null);
   const [question, setQuestion] = useState("");
   const [startedId, setStartedId] = useState<string | null>(null);
+  const [live, setLive] = useState(false);
 
+  const config = useQuery({ queryKey: ["config"], queryFn: api.config });
+  // Shown only when the server can run live on request; a server that is live by default needs no toggle.
+  const liveAllowed = !!config.data?.live_available && config.data.llm_mode !== "live";
+  const liveOn = liveAllowed && live;
   const detail = useQuery({ queryKey: ["incident", id], queryFn: () => api.incident(id) });
   const evidence = useQuery({ queryKey: ["evidence", id], queryFn: () => api.evidence(id) });
 
@@ -40,11 +45,13 @@ export default function IncidentDetail() {
   });
 
   const start = useMutation({
-    mutationFn: () => api.startInvestigation(id, question.trim() || undefined),
+    mutationFn: () => api.startInvestigation(id, question.trim() || undefined, liveOn ? "live" : undefined),
     onSuccess: (res) => {
       setStartedId(res.investigation_id);
       setTab("findings");
       qc.invalidateQueries({ queryKey: ["investigation", res.investigation_id] });
+      qc.invalidateQueries({ queryKey: ["incident", id] });
+      qc.invalidateQueries({ queryKey: ["config"] });
     },
   });
 
@@ -78,6 +85,7 @@ export default function IncidentDetail() {
   }
 
   const incident = detail.data.incident;
+  const runs = detail.data.investigations;
   const running = inv.data && ["queued", "running"].includes(inv.data.status);
   const focusRef = focus?.ref ?? null;
 
@@ -118,11 +126,46 @@ export default function IncidentDetail() {
               aria-label="Investigation question"
               className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm"
             />
+            {liveAllowed && (
+              <label className="flex items-start gap-2 text-xs text-slate-600">
+                <input type="checkbox" checked={live} onChange={(e) => setLive(e.target.checked)} className="mt-0.5" data-testid="use-live" />
+                <span>
+                  Use live Claude ({config.data!.live_model}) · {Math.max(0, config.data!.live_daily_limit - config.data!.live_runs_today)} of{" "}
+                  {config.data!.live_daily_limit} left today
+                  {live && !accessCode.get() && config.data!.llm_mode !== "live" && (
+                    <span className="block text-amber-700">Needs the access code — <Link to="/settings" className="underline">enter it in Settings</Link>.</span>
+                  )}
+                </span>
+              </label>
+            )}
             <Button type="submit" variant="primary" className="w-full" disabled={start.isPending || !!running} data-testid="run-investigation">
               {(start.isPending || running) && <Spinner className="h-3.5 w-3.5" />}
               {running ? "Investigation running…" : inv.data ? "Run investigation again" : "Run investigation"}
             </Button>
             {start.isError && <ErrorBox error={start.error} />}
+            {runs.length > 0 && (
+              <div className="text-xs text-slate-500" data-testid="prior-runs">
+                {runs.length} previous run{runs.length > 1 ? "s" : ""} — a new run is added; earlier results are kept.
+                {runs.length > 1 && (
+                  <select
+                    value={investigationId ?? ""}
+                    onChange={(e) => {
+                      setStartedId(e.target.value);
+                      setTab("findings");
+                    }}
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700"
+                    aria-label="Investigation run"
+                  >
+                    {runs.map((r, i) => (
+                      <option key={r.id} value={r.id}>
+                        {i === 0 ? "Latest" : `Run ${runs.length - i}`} · {formatTime(r.started_at, true)} · {r.llm_mode} · {r.status}
+                        {r.top_hypothesis ? ` · ${r.top_hypothesis.slice(0, 40)}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
           </form>
         </div>
       </header>

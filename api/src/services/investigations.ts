@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type {
+  InvestigationOutput,
   Hypothesis,
   Incident,
   Investigation,
@@ -8,6 +9,8 @@ import type {
   ResolvedEvidence,
   SimilarIncidentResult,
   HistoricalIncident,
+  InvestigationRun,
+  TraceStage,
 } from "@resolveai/shared";
 import { evidenceId } from "@resolveai/shared";
 import { all, type Db, get, json, run, tx } from "../db/index.js";
@@ -70,25 +73,73 @@ export async function callWithRetry<T>(fn: () => Promise<LlmResult<T>>, issues: 
   }
 }
 
+/** Records how long each stage took and what it reported; persisted as the investigation's audit trail. */
+class Trace {
+  readonly stages: TraceStage[] = [];
+
+  async step<T>(stage: string, fn: () => T | Promise<T>, details: (r: T) => TraceStage["details"]): Promise<T> {
+    const started = Date.now();
+    const result = await fn();
+    this.stages.push({ stage, started_at: new Date(started).toISOString(), duration_ms: Date.now() - started, details: details(result) });
+    return result;
+  }
+}
+
 async function runInvestigation(deps: Deps, id: string, incident: Incident, question: string | null) {
   const { db, llm } = deps;
+  const trace = new Trace();
+  const saveTrace = () => run(db, "UPDATE investigations SET trace = ? WHERE id = ?", JSON.stringify(trace.stages), id);
 
   setStage(db, id, "running", "Gathering logs, deployments and metrics");
-  const evidence = loadEvidence(db, incident);
+  const evidence = await trace.step("Gather evidence", () => loadEvidence(db, incident), (e) => ({
+    logs: e.logs.length,
+    error_signals: e.error_signals.length,
+    deployments: e.deployments.length,
+    metrics: e.metrics.length,
+    timeline_events: e.timeline.length,
+    runbooks: e.runbooks.length,
+  }));
 
   setStage(db, id, "running", "Searching incident history");
-  const similar = findSimilar(db, evidence);
-  const packet = buildPacket(evidence, similar, question);
+  const similar = await trace.step("Search incident history", () => findSimilar(db, evidence), (c) => ({
+    candidates: c.length,
+    top_match: c[0]?.historical.key ?? "none",
+  }));
+  const packet = await trace.step("Build evidence packet", () => buildPacket(evidence, similar, question), (p) => ({
+    items: p.items.length,
+    characters: JSON.stringify(p).length,
+    redactions: p.redactions,
+    truncated: p.truncated,
+  }));
   run(db, "UPDATE investigations SET evidence_packet = ? WHERE id = ?", JSON.stringify(packet), id);
+  saveTrace();
 
   setStage(db, id, "running", llm.mode === "live" ? "Analysing evidence with Claude" : "Analysing evidence (recorded mode)");
   const issues: string[] = [];
-  const result = await withTimeout(
-    callWithRetry(() => llm.investigate(packet), issues),
-    OVERALL_TIMEOUT_MS,
-    "The analysis took too long and was stopped. Try again; the incident data is unchanged.",
-  );
-  const v = validateInvestigation(result.output, packet);
+  let result: LlmResult<InvestigationOutput>;
+  try {
+    result = await trace.step(llm.mode === "live" ? "Analyse with Claude" : "Analyse (recorded)", () => withTimeout(
+      callWithRetry(() => llm.investigate(packet), issues),
+      OVERALL_TIMEOUT_MS,
+      "The analysis took too long and was stopped. Try again; the incident data is unchanged.",
+    ), (r) => ({
+      mode: llm.mode,
+      model: r.model ?? "recorded",
+      retried: issues.length > 0,
+      ...Object.fromEntries(Object.entries(r.usage ?? {}).filter(([, v]) => typeof v === "number")),
+    }));
+  } finally {
+    saveTrace();
+  }
+
+  const v = await trace.step("Validate output", () => validateInvestigation(result.output, packet), (r) => ({
+    hypotheses: r.hypotheses.length,
+    speculative: r.hypotheses.filter((h) => h.speculative).length,
+    citations_removed: r.issues.filter((i) => i.startsWith("Removed citation")).length,
+    unsafe_checks_removed: r.issues.filter((i) => i.startsWith("Removed a recommended check")).length,
+    unverified_numbers: r.issues.filter((i) => i.startsWith("Unverified number")).length,
+    insufficient_evidence: r.insufficient_evidence,
+  }));
   issues.push(...v.issues);
   if (packet.redactions > 0) issues.push(`Redacted ${packet.redactions} secret or personal value(s) before analysis.`);
   if (packet.truncated) issues.push("Evidence packet was trimmed to fit the size limit; lower-priority log lines were left out.");
@@ -113,9 +164,9 @@ async function runInvestigation(deps: Deps, id: string, incident: Incident, ques
     });
     run(db,
       `UPDATE investigations SET status = 'completed', stage = NULL, model_name = ?, summary = ?, insufficient_evidence = ?,
-              limitations = ?, validation_issues = ?, usage = ?, completed_at = ? WHERE id = ?`,
+              limitations = ?, validation_issues = ?, usage = ?, trace = ?, completed_at = ? WHERE id = ?`,
       result.model, v.summary, v.insufficient_evidence ? 1 : 0, JSON.stringify(v.limitations), JSON.stringify(issues),
-      result.usage ? JSON.stringify(result.usage) : null, now(), id);
+      result.usage ? JSON.stringify(result.usage) : null, JSON.stringify(trace.stages), now(), id);
   });
 }
 
@@ -137,6 +188,7 @@ interface InvestigationRow {
   insufficient_evidence: number;
   limitations: string;
   validation_issues: string;
+  trace: string;
   started_at: string;
   completed_at: string | null;
   error_message: string | null;
@@ -229,10 +281,27 @@ export function getInvestigation(db: Db, id: string): (Investigation & { stage: 
     hypotheses,
     similar_incidents,
     evidence_count: packet?.items.length ?? 0,
+    trace: json<TraceStage[]>(row.trace, []),
   };
 }
 
 export function latestInvestigationId(db: Db, incidentId: string): string | undefined {
   return get<{ id: string }>(db,
     "SELECT id FROM investigations WHERE incident_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1", incidentId)?.id;
+}
+
+/** Every run for an incident, newest first, so a re-run is visibly additive rather than a replacement. */
+export function listInvestigationRuns(db: Db, incidentId: string): InvestigationRun[] {
+  return all<InvestigationRun>(db,
+    `SELECT i.id, i.status, i.llm_mode, i.started_at,
+            (SELECT title FROM hypotheses h WHERE h.investigation_id = i.id ORDER BY rank LIMIT 1) AS top_hypothesis
+       FROM investigations i WHERE i.incident_id = ? ORDER BY i.started_at DESC, i.rowid DESC`, incidentId);
+}
+
+/** Live (paid) model calls made since midnight UTC, across investigations and RCA drafts. */
+export function liveRunsToday(db: Db): number {
+  const since = `${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`;
+  const inv = get<{ n: number }>(db, "SELECT COUNT(*) AS n FROM investigations WHERE llm_mode = 'live' AND started_at >= ?", since)?.n ?? 0;
+  const rca = get<{ n: number }>(db, "SELECT COUNT(*) AS n FROM rca_drafts WHERE llm_mode = 'live' AND generated_at >= ?", since)?.n ?? 0;
+  return inv + rca;
 }

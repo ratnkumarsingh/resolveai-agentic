@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Incident, PatchRcaBody, RcaDraft } from "@resolveai/shared";
 import { all, type Db, get, json, run } from "../db/index.js";
 import { LlmError } from "../llm/provider.js";
-import { validateRca } from "../pipeline/validate.js";
+import { packetText, validateRca } from "../pipeline/validate.js";
 import { callWithRetry, type Deps, getInvestigation, getInvestigationRow, getPacket, withTimeout } from "./investigations.js";
 
 interface RcaRow {
@@ -18,6 +18,8 @@ interface RcaRow {
   resolution_steps: string;
   prevention_actions: string;
   evidence_ids: string;
+  validation_issues: string;
+  llm_mode: "live" | "recorded";
   generated_at: string;
   updated_at: string;
 }
@@ -36,6 +38,8 @@ function toDto(r: RcaRow): RcaDraft {
     resolution_steps: json(r.resolution_steps, []),
     prevention_actions: json(r.prevention_actions, []),
     evidence_ids: json(r.evidence_ids, []),
+    validation_issues: json(r.validation_issues, []),
+    llm_mode: r.llm_mode,
     generated_at: r.generated_at,
     updated_at: r.updated_at,
   };
@@ -91,17 +95,21 @@ export async function createRca(deps: Deps, incident: Incident, investigationId:
     "Drafting the RCA took too long and was stopped. Try again.",
   );
 
-  const { rca, evidence_ids } = validateRca(result.output, new Set(packet.items.map((i) => i.id)));
+  const sourceText = [packetText(packet), verified ?? "", ...feedback.map((f) => f.comment ?? "")].join("\n");
+  const v = validateRca(result.output, new Set(packet.items.map((i) => i.id)), sourceText);
+  const { rca, evidence_ids } = v;
+  issues.push(...v.issues);
   const version = (get<{ v: number | null }>(db, "SELECT MAX(version) AS v FROM rca_drafts WHERE incident_id = ?", incident.id)?.v ?? 0) + 1;
   const id = randomUUID();
   const ts = new Date().toISOString();
   run(db,
     `INSERT INTO rca_drafts (id, incident_id, investigation_id, version, status, impact, timeline, root_cause,
-                             contributing_factors, resolution_steps, prevention_actions, evidence_ids, generated_at, updated_at)
-     VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                             contributing_factors, resolution_steps, prevention_actions, evidence_ids, validation_issues, llm_mode,
+                             generated_at, updated_at)
+     VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     id, incident.id, investigationId, version, rca.impact, JSON.stringify(rca.timeline), rca.root_cause,
     JSON.stringify(rca.contributing_factors), JSON.stringify(rca.resolution_steps), JSON.stringify(rca.prevention_actions),
-    JSON.stringify(evidence_ids), ts, ts);
+    JSON.stringify(evidence_ids), JSON.stringify(issues), llm.mode, ts, ts);
   return getRca(db, id)!;
 }
 

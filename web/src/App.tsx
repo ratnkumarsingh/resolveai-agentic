@@ -42,7 +42,7 @@ export default function App() {
                 className={cx("rounded-full px-2 py-1 font-medium", config.data.llm_mode === "live" ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700")}
                 title={config.data.llm_mode === "live" ? "Investigations call Claude" : "Investigations replay recorded/rule-based analysis; no model is called"}
               >
-                LLM: {config.data.llm_mode === "live" ? `live · ${config.data.model}` : "recorded (offline)"}
+                LLM: {config.data.llm_mode === "live" ? `live · ${config.data.model}` : config.data.live_available ? "recorded · live on request" : "recorded (offline)"}
               </span>
             )}
           </div>

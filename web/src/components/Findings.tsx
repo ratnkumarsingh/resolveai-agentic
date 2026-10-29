@@ -264,7 +264,37 @@ export function Findings({
         </div>
       )}
 
+      <TracePanel trace={inv.trace} />
+
       <VerifiedCauseForm inv={inv} />
     </div>
+  );
+}
+
+const fmtDetail = (v: string | number | boolean) => (typeof v === "boolean" ? (v ? "yes" : "no") : String(v));
+
+/** The audit trail: what each pipeline stage did and how long it took. Closed by default. */
+function TracePanel({ trace }: { trace: InvestigationDto["trace"] }) {
+  if (!trace.length) return null;
+  const total = trace.reduce((n, t) => n + t.duration_ms, 0);
+  return (
+    <details className="rounded-lg border border-slate-200 bg-white p-4 text-sm" data-testid="trace-panel">
+      <summary className="cursor-pointer font-medium text-slate-800">
+        How this was produced <span className="font-normal text-slate-500">· {trace.length} stages · {(total / 1000).toFixed(1)} s</span>
+      </summary>
+      <ol className="mt-3 space-y-2">
+        {trace.map((t, i) => (
+          <li key={t.stage} className="flex flex-wrap gap-x-3 gap-y-1 border-l-2 border-slate-200 pl-3">
+            <span className="w-full font-medium text-slate-700 sm:w-48">{i + 1}. {t.stage}</span>
+            <span className="font-mono text-xs leading-5 text-slate-500">{t.duration_ms} ms</span>
+            <span className="flex flex-1 flex-wrap gap-1">
+              {Object.entries(t.details).map(([k, v]) => (
+                <span key={k} className="rounded bg-slate-100 px-1.5 text-xs leading-5 text-slate-600">{k.replace(/_/g, " ")}: {fmtDetail(v)}</span>
+              ))}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }

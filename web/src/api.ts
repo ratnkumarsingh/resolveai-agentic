@@ -3,15 +3,42 @@ import type {
   FeedbackBody,
   Incident,
   IncidentEvidence,
+  IncidentListItem,
   Investigation,
+  InvestigationRun,
   PatchRcaBody,
   RcaDraft,
 } from "@resolveai/shared";
 
+const CODE_KEY = "resolveai.accessCode";
+
+/** The live-mode access code, kept only in this browser. Storage can be unavailable (private mode), so failures are ignored. */
+export const accessCode = {
+  get(): string {
+    try {
+      return localStorage.getItem(CODE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  },
+  set(code: string) {
+    try {
+      if (code) localStorage.setItem(CODE_KEY, code);
+      else localStorage.removeItem(CODE_KEY);
+    } catch {
+      // Not persisted; the code just has to be entered again next time.
+    }
+  },
+};
+
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["content-type"] = "application/json";
+  const code = accessCode.get();
+  if (code && method !== "GET") headers["x-access-code"] = code;
   const res = await fetch(url, {
     method,
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
@@ -27,7 +54,7 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 }
 
 export interface IncidentList {
-  items: Incident[];
+  items: IncidentListItem[];
   total: number;
   page: number;
   page_size: number;
@@ -37,6 +64,7 @@ export interface IncidentList {
 export interface IncidentDetail {
   incident: Incident;
   latest_investigation_id: string | null;
+  investigations: InvestigationRun[];
   rca_drafts: RcaDraft[];
 }
 
@@ -56,8 +84,8 @@ export const api = {
     request<IncidentList>("GET", `/api/incidents?${new URLSearchParams(Object.entries(params).filter(([, v]) => v))}`),
   incident: (id: string) => request<IncidentDetail>("GET", `/api/incidents/${encodeURIComponent(id)}`),
   evidence: (id: string) => request<IncidentEvidence>("GET", `/api/incidents/${encodeURIComponent(id)}/evidence`),
-  startInvestigation: (id: string, question?: string) =>
-    request<{ investigation_id: string; status: string }>("POST", `/api/incidents/${encodeURIComponent(id)}/investigations`, { question }),
+  startInvestigation: (id: string, question?: string, mode?: "live" | "recorded") =>
+    request<{ investigation_id: string; status: string }>("POST", `/api/incidents/${encodeURIComponent(id)}/investigations`, { question, mode }),
   investigation: (id: string) => request<InvestigationDto>("GET", `/api/investigations/${id}`),
   feedback: (id: string, body: FeedbackBody) => request<{ id: string }>("POST", `/api/investigations/${id}/feedback`, body),
   createRca: (incidentId: string, investigationId: string) =>

@@ -24,6 +24,12 @@ test("incident → investigation → evidence → similar incident → RCA draft
   await expect(hypotheses.first()).toContainText(/pool/i);
   await expect(page.getByText(/not confirmed/).first()).toBeVisible();
 
+  // The audit trail lists every pipeline stage.
+  const trace = page.getByTestId("trace-panel");
+  await trace.locator("summary").click();
+  await expect(trace).toContainText("Build evidence packet");
+  await expect(trace).toContainText("redactions: 1");
+
   // Evidence links jump to the source record.
   await hypotheses.first().getByTestId("evidence-link").filter({ hasText: "pool.max=20" }).click();
   await expect(page.getByRole("tab", { name: /Logs/ })).toHaveAttribute("aria-selected", "true");
@@ -40,7 +46,7 @@ test("incident → investigation → evidence → similar incident → RCA draft
   await page.getByRole("tab", { name: "RCA" }).click();
   await page.getByTestId("generate-rca").click();
   const editor = page.getByTestId("rca-editor");
-  await expect(editor).toContainText("AI-generated draft — review required");
+  await expect(editor).toContainText(/draft — review required/);
   const rootCause = page.getByTestId("rca-root-cause");
   await rootCause.fill("Verified: v2.8.1 set pool.max=20 in db-client.yaml (previously 100).");
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -55,4 +61,10 @@ test("incident → investigation → evidence → similar incident → RCA draft
   expect(download.suggestedFilename()).toBe("INC-1042-rca-v1.md");
   const body = await (await request.get(`/api/rca-drafts/${(await (await request.get("/api/incidents/INC-1042")).json()).rca_drafts[0].id}/export.md`)).text();
   expect(body).toContain("previously 100");
+
+  // The incident waits in the review queue until a person verifies it.
+  await page.goto("/");
+  await page.getByTestId("needs-review").click();
+  await expect(page.getByRole("row", { name: /INC-1042/ })).toContainText("Needs review");
+  await expect(page.getByRole("row", { name: /INC-1043/ })).toHaveCount(0);
 });

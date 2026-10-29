@@ -1,0 +1,26 @@
+# Local deployment: one container, reachable only from this machine at http://localhost:8787.
+services:
+  resolveai:
+    build: .
+    image: resolveai:local
+    container_name: resolveai
+    ports:
+      # Bound to loopback on the host, so nothing else on the network can reach it.
+      - "127.0.0.1:8787:8787"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # These override anything in .env that only makes sense outside the container.
+      HOST: 0.0.0.0
+      API_PORT: "8787"
+      DB_PATH: /app/data/resolveai.db
+      WEB_DIST: /app/web/dist
+      # The host-only port binding above is what keeps reset local; inside Docker every caller has a bridge IP.
+      DEMO_RESET_ANY_IP: "true"
+    volumes:
+      - resolveai-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  resolveai-data:

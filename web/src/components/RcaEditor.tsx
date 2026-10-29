@@ -26,7 +26,10 @@ function Editor({ rca, incidentKey, onEvidence }: { rca: RcaDraft; incidentKey: 
       contributing_factors: lines(factors), resolution_steps: lines(resolution), prevention_actions: lines(prevention),
       status,
     }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["incident", incidentKey] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["incident", incidentKey] });
+      qc.invalidateQueries({ queryKey: ["incidents"] });
+    },
   });
 
   const copy = useMutation({
@@ -42,7 +45,7 @@ function Editor({ rca, incidentKey, onEvidence }: { rca: RcaDraft; incidentKey: 
   return (
     <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4" data-testid="rca-editor">
       <div className="flex flex-wrap items-center gap-2">
-        <AiBadge>AI-generated draft — review required</AiBadge>
+        <AiBadge>{rca.llm_mode === "live" ? "AI-generated draft" : "Recorded draft"} — review required</AiBadge>
         <span className={cx("rounded px-1.5 py-0.5 text-xs font-medium", rca.status === "reviewed" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700")}>
           {rca.status}
         </span>
@@ -104,6 +107,12 @@ function Editor({ rca, incidentKey, onEvidence }: { rca: RcaDraft; incidentKey: 
         {dirty && <span className="text-xs text-amber-700">Unsaved changes — save before exporting.</span>}
         {save.isSuccess && !dirty && <span className="text-xs text-emerald-700">Saved.</span>}
       </div>
+      {rca.validation_issues.length > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" data-testid="rca-validation">
+          <div className="font-medium">Check before publishing</div>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">{rca.validation_issues.map((i) => <li key={i}>{i}</li>)}</ul>
+        </div>
+      )}
       {save.isError && <ErrorBox error={save.error} />}
       {copy.isError && <ErrorBox error={copy.error} />}
     </div>

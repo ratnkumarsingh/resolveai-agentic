@@ -2,9 +2,16 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { age, Empty, ErrorBox, formatTime, SeverityChip, Spinner, StatusChip } from "../components/ui";
+import type { ReviewState } from "@resolveai/shared";
+import { age, cx, Empty, ErrorBox, formatTime, SeverityChip, Spinner, StatusChip } from "../components/ui";
 
 const select = "rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm";
+
+const REVIEW: Record<ReviewState, { label: string; className: string; title: string }> = {
+  none: { label: "Not investigated", className: "bg-slate-100 text-slate-600", title: "No completed investigation yet" },
+  pending: { label: "Needs review", className: "bg-amber-100 text-amber-900", title: "AI findings exist but no one has verified the root cause and reviewed the RCA" },
+  verified: { label: "Verified", className: "bg-emerald-100 text-emerald-800", title: "Root cause verified and RCA marked reviewed by a person" },
+};
 
 export default function IncidentQueue() {
   const navigate = useNavigate();
@@ -12,10 +19,11 @@ export default function IncidentQueue() {
   const [severity, setSeverity] = useState("");
   const [status, setStatus] = useState("");
   const [service, setService] = useState("");
+  const [review, setReview] = useState(false);
 
   const list = useQuery({
-    queryKey: ["incidents", q, severity, status, service],
-    queryFn: () => api.incidents({ q, severity, status, service }),
+    queryKey: ["incidents", q, severity, status, service, review],
+    queryFn: () => api.incidents({ q, severity, status, service, review: review ? "pending" : "" }),
     placeholderData: keepPreviousData,
   });
 
@@ -32,6 +40,15 @@ export default function IncidentQueue() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            aria-pressed={review}
+            onClick={() => setReview((r) => !r)}
+            className={cx("rounded-full border px-3 py-1 text-sm", review ? "border-amber-400 bg-amber-100 font-medium text-amber-900" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50")}
+            data-testid="needs-review"
+          >
+            Needs review
+          </button>
           <input
             type="search"
             value={q}
@@ -58,7 +75,9 @@ export default function IncidentQueue() {
       {list.isError && <ErrorBox error={list.error} onRetry={() => list.refetch()} />}
       {list.isPending && <div className="flex items-center gap-2 text-sm text-slate-500"><Spinner /> Loading incidents…</div>}
       {list.isSuccess && items.length === 0 && (
-        <Empty title="No incidents match these filters">Clear the search or filters, or reseed the demo data from Settings.</Empty>
+        <Empty title={review ? "Nothing waiting for review" : "No incidents match these filters"}>
+          {review ? "Every investigated incident has a verified root cause and a reviewed RCA." : "Clear the search or filters, or reseed the demo data from Settings."}
+        </Empty>
       )}
 
       {items.length > 0 && (
@@ -70,6 +89,7 @@ export default function IncidentQueue() {
                 <th className="px-4 py-2">Severity</th>
                 <th className="px-4 py-2">Service</th>
                 <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Review</th>
                 <th className="px-4 py-2">Started</th>
                 <th className="px-4 py-2">Age</th>
                 <th className="px-4 py-2" />
@@ -87,6 +107,11 @@ export default function IncidentQueue() {
                   <td className="px-4 py-3"><SeverityChip severity={i.severity} /></td>
                   <td className="px-4 py-3 font-mono text-xs">{i.service_name}</td>
                   <td className="px-4 py-3"><StatusChip status={i.status} /></td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span className={cx("rounded px-1.5 py-0.5 text-xs font-medium", REVIEW[i.review_state].className)} title={REVIEW[i.review_state].title}>
+                      {REVIEW[i.review_state].label}
+                    </span>
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600">{formatTime(i.started_at, true)}</td>
                   <td className="px-4 py-3 text-xs text-slate-600">{age(i.started_at)}</td>
                   <td className="px-4 py-3 text-right">

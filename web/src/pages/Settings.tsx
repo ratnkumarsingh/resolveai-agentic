@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { api } from "../api";
+import { accessCode, api } from "../api";
 import { Button, Card, ErrorBox, Spinner } from "../components/ui";
 
 export default function Settings() {
   const qc = useQueryClient();
   const config = useQuery({ queryKey: ["config"], queryFn: api.config });
   const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState(accessCode.get);
+  const [savedCode, setSavedCode] = useState(accessCode.get);
   const reset = useMutation({
     mutationFn: api.resetDemo,
     onSuccess: () => {
@@ -30,10 +32,48 @@ export default function Settings() {
             {config.data ? (
               config.data.llm_mode === "live"
                 ? <>Live — investigations call Claude (<span className="font-mono">{config.data.model}</span>) from the server.</>
-                : <>Recorded — investigations replay a recorded analysis (INC-1042) or deterministic rules. No model is called.</>
+                : <>Recorded by default — investigations replay a recorded analysis (INC-1042) or deterministic rules. No model is called.</>
+            ) : "…"}
+          </dd>
+          <dt className="text-slate-500">Live Claude</dt>
+          <dd>
+            {config.data ? (
+              config.data.live_available
+                ? <>Available on request (<span className="font-mono">{config.data.live_model}</span>) · {config.data.live_runs_today} of {config.data.live_daily_limit} model calls used today (UTC).</>
+                : "Not available on this server (needs ANTHROPIC_API_KEY and LIVE_ACCESS_CODE)."
             ) : "…"}
           </dd>
         </dl>
+      </Card>
+
+      <Card title="Access code">
+        <p className="text-sm text-slate-600">
+          Live Claude runs cost money, so they need the access code set on the server (<span className="font-mono">LIVE_ACCESS_CODE</span>).
+          It also allows demo reset from outside localhost. The code is kept only in this browser.
+        </p>
+        <form
+          className="mt-3 flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            accessCode.set(code.trim());
+            setSavedCode(code.trim());
+          }}
+        >
+          <input
+            type="password"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Access code"
+            aria-label="Access code"
+            autoComplete="off"
+            className="w-64 rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          />
+          <Button type="submit" disabled={code.trim() === savedCode}>Save</Button>
+          {savedCode && (
+            <Button type="button" variant="ghost" onClick={() => { accessCode.set(""); setCode(""); setSavedCode(""); }}>Forget</Button>
+          )}
+          <span className="text-xs text-slate-500">{savedCode ? "Saved in this browser." : "No code saved."}</span>
+        </form>
       </Card>
 
       <Card title="Reset demo data">

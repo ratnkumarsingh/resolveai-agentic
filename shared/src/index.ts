@@ -82,6 +82,8 @@ export type RcaOutput = z.infer<typeof RcaOutput>;
 
 export const StartInvestigationBody = z.object({
   question: z.string().max(500).optional(),
+  /** "live" calls Claude and needs the access code header; anything else replays recorded output. */
+  mode: z.enum(["recorded", "live"]).optional(),
 });
 
 export const CreateRcaBody = z.object({
@@ -259,6 +261,30 @@ export interface Investigation {
   hypotheses: Hypothesis[];
   similar_incidents: SimilarIncidentResult[];
   evidence_count: number;
+  trace: TraceStage[];
+}
+
+/** One step of how an investigation was produced: timing plus the counts that step reported. */
+export interface TraceStage {
+  stage: string;
+  started_at: string;
+  duration_ms: number;
+  details: Record<string, string | number | boolean>;
+}
+
+/** pending = a completed investigation still needs a human to verify the cause or review the RCA. */
+export type ReviewState = "none" | "pending" | "verified";
+
+export interface IncidentListItem extends Incident {
+  review_state: ReviewState;
+}
+
+export interface InvestigationRun {
+  id: string;
+  status: InvestigationStatus;
+  llm_mode: "live" | "recorded";
+  started_at: string;
+  top_hypothesis: string | null;
 }
 
 export interface RcaDraft extends RcaOutput {
@@ -270,11 +296,19 @@ export interface RcaDraft extends RcaOutput {
   generated_at: string;
   updated_at: string;
   evidence_ids: string[];
+  validation_issues: string[];
+  llm_mode: "live" | "recorded";
 }
 
 export interface AppConfig {
+  /** Mode used when a run doesn't ask for live. */
   llm_mode: "live" | "recorded";
   model: string;
+  /** Live Claude runs are possible on request (API key and access code are configured). */
+  live_available: boolean;
+  live_model: string | null;
+  live_daily_limit: number;
+  live_runs_today: number;
   demo_mode: boolean;
   data_source: "Demo dataset";
 }

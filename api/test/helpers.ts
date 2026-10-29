@@ -1,15 +1,26 @@
 import type { InvestigationOutput, RcaOutput } from "@resolveai/shared";
-import { buildApp } from "../src/app.js";
+import { type AppDeps, buildApp } from "../src/app.js";
 import { openDb } from "../src/db/index.js";
 import { seedDemoData } from "../src/db/seed.js";
 import type { EvidencePacket } from "../src/pipeline/packet.js";
 import type { LlmProvider, LlmResult, RcaInput } from "../src/llm/provider.js";
 import { RecordedProvider } from "../src/llm/recorded.js";
 
-export function makeApp(llm: LlmProvider = new RecordedProvider(0)) {
+/**
+ * Builds an app on a fresh seeded in-memory DB. A live `llm` (such as ScriptedProvider) becomes the
+ * default mode, matching LLM_MODE=live. Pass `live` to keep recorded as default with live on request.
+ */
+export function makeApp(llm: LlmProvider = new RecordedProvider(0), config: Partial<AppDeps["config"]> = {}, live?: LlmProvider) {
   const db = openDb(":memory:");
   seedDemoData(db);
-  const app = buildApp({ db, llm, config: { demoMode: true, model: "test-model" } });
+  const providers = llm.mode === "live" ? { recorded: new RecordedProvider(0), live: llm } : { recorded: llm, live };
+  const app = buildApp({
+    db,
+    providers,
+    config: {
+      demoMode: true, model: "test-model", llmMode: llm.mode, liveAccessCode: undefined, liveDailyLimit: 1000, ...config,
+    },
+  });
   return { app, db };
 }
 

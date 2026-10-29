@@ -11,11 +11,25 @@ const db = openDb(config.dbPath);
 // First run: start with the demo dataset so the app is never empty.
 if (!get(db, "SELECT 1 FROM incidents LIMIT 1")) seedDemoData(db);
 
-const llm = config.llmMode === "live" ? new ClaudeProvider(config.apiKey!, config.model) : new RecordedProvider();
-const app = buildApp({ db, llm, config });
+const providers = {
+  recorded: new RecordedProvider(),
+  live: config.apiKey ? new ClaudeProvider(config.apiKey, config.model) : undefined,
+};
+const app = buildApp({
+  db,
+  providers,
+  config: { ...config, demoResetAnyIp: process.env.DEMO_RESET_ANY_IP === "true" },
+});
 
 // Investigations interrupted by a restart can't resume; mark them failed so the UI isn't stuck polling.
 db.prepare("UPDATE investigations SET status = 'failed', stage = NULL, error_message = 'Interrupted by a server restart. Run the investigation again.' WHERE status IN ('queued', 'running')").run();
 
-await app.listen({ host: "127.0.0.1", port: config.port });
-console.log(`ResolveAI API on http://127.0.0.1:${config.port} — LLM mode: ${llm.mode}${llm.mode === "live" ? ` (${config.model})` : ""}`);
+await app.listen({ host: config.host, port: config.port });
+const live = !providers.live
+  ? "off (no API key)"
+  : config.llmMode === "live"
+    ? `default (${config.model})`
+    : config.liveAccessCode
+      ? `with access code (${config.model}, ${config.liveDailyLimit}/day)`
+      : "off (set LIVE_ACCESS_CODE to allow it)";
+console.log(`ResolveAI on http://${config.host}:${config.port}${config.webDist ? " (serving web app)" : ""} — recorded mode; live Claude: ${live}`);

@@ -16,6 +16,32 @@ Open http://localhost:5173 and pick **INC-1042**.
 
 Requires Node 22.13+ (it uses the built-in `node:sqlite`; nothing native to compile).
 
+## Run in Docker (local deployment)
+
+One container serves both the API and the built web app. The port is published on `127.0.0.1` only, so nothing else on your network can reach it. Start Docker Desktop first.
+
+```bash
+cp .env.example .env              # optional: add ANTHROPIC_API_KEY and LIVE_ACCESS_CODE for live runs
+docker compose up -d --build      # build the image and start it in the background
+docker compose ps                 # wait for "healthy"
+```
+
+Open http://localhost:8787.
+
+| Task | Command |
+| --- | --- |
+| Follow logs | `docker compose logs -f` |
+| Stop (keeps data) | `docker compose stop` |
+| Upgrade after `git pull` | `docker compose up -d --build` |
+| Back up the database | `docker compose cp resolveai:/app/data ./backup` |
+| Reset demo data | Settings → Reset demo data, or `docker compose down -v` (deletes the volume; the next start reseeds) |
+| Remove everything | `docker compose down -v --rmi local` |
+
+- **Data:** SQLite lives in the named volume `resolveai-data` and survives restarts and rebuilds.
+- **Settings:** `.env` is read when present. The compose file pins `HOST`, `API_PORT`, `DB_PATH` and `WEB_DIST` for the container, so `.env` values for those are ignored there.
+- **Demo reset:** callers inside Docker arrive from the bridge network rather than loopback, so the compose file sets `DEMO_RESET_ANY_IP=true`. This is safe only because of the loopback-only port binding; don't publish the port more widely without removing it.
+- **Testing the container:** `BASE_URL=http://localhost:8787 npm run e2e` runs the browser test against it.
+
 ## Environment
 
 Copy `.env.example` to `.env`. All variables are server-side; none use the `VITE_` prefix, so none can reach the browser bundle.
@@ -25,13 +51,18 @@ Copy `.env.example` to `.env`. All variables are server-side; none use the `VITE
 | `ANTHROPIC_API_KEY` | empty | Claude API key. Empty means recorded mode. |
 | `LLM_MODE` | `recorded` | `live` calls Claude; `recorded` replays fixtures and rules offline. |
 | `CLAUDE_MODEL` | `claude-opus-5-5` | Model for investigations and RCA drafts. |
-| `DEMO_MODE` | `true` | Enables `POST /api/demo/reset` (localhost only). |
+| `LIVE_ACCESS_CODE` | empty | With an API key, lets a run opt into live Claude while `LLM_MODE` stays `recorded`. The browser sends it from Settings → Access code. |
+| `LIVE_DAILY_LIMIT` | `20` | Maximum live model calls (investigations + RCA drafts) per UTC day; further live requests get HTTP 429. |
+| `DEMO_MODE` | `true` | Enables `POST /api/demo/reset` (from localhost, or with the access code). |
 | `DB_PATH` | `../data/resolveai.db` | SQLite file, relative to `api/`. |
+| `HOST` | `127.0.0.1` | Listen address. Docker uses `0.0.0.0` inside the container. |
 | `API_PORT` | `8787` | API port. |
+| `WEB_DIST` | empty | Serve a built web app from the API (set in Docker). |
 
 ### LLM modes
 
 - **recorded** (default): deterministic and runs without network access. INC-1042 replays a recorded analysis; other incidents get a rule-based analysis built from the same evidence packet. Both go through the same server-side validation as live output. Use this mode for a demo that must behave the same way every time.
+- **live on request** (recommended for shared demos): keep `LLM_MODE=recorded`, set `ANTHROPIC_API_KEY` and `LIVE_ACCESS_CODE`. Everyone gets recorded mode; a person with the code can tick *Use live Claude* on an incident. An RCA is drafted in the same mode as its investigation. Live calls are capped by `LIVE_DAILY_LIMIT`.
 - **live**: the server calls Claude through `@anthropic-ai/sdk` with structured JSON output (`output_config.format`, effort `medium`) and server-side refusal fallback (`fallbacks: "default"`). The response is then validated against the evidence packet.
 
 ## Demo script (3–4 minutes)
@@ -42,8 +73,10 @@ Copy `.env.example` to `.env`. All variables are server-side; none use the `VITE
 4. On **AI findings**, the *Observed facts* (computed from records) are kept apart from the *Inferred analysis* (model output). Click an evidence chip such as `pool.max=20` to jump to the source log line.
 5. **Similar incidents** shows INC-0881, a pool-size regression after a config change. Open its historical RCA.
 6. **Recommended checks** list what an engineer should verify and what signal to expect. No action is executed.
-7. Record a verified root cause, then go to **RCA**: **Generate RCA draft**, edit a field, **Save**, then **Copy Markdown** or **Download .md**.
-8. **Settings → Reset demo data** returns everything to a known state for the next run.
+7. Open **How this was produced** under the findings: every pipeline stage with its timing and counts (records gathered, redactions, citations removed, unverified numbers).
+8. Record a verified root cause, then go to **RCA**: **Generate RCA draft**, edit a field, **Save & mark reviewed**, then **Copy Markdown** or **Download .md**.
+9. Back on the queue, **Needs review** lists incidents whose AI findings no one has confirmed yet; INC-1042 now shows **Verified**.
+10. **Settings → Reset demo data** returns everything to a known state for the next run.
 
 Other seeded cases:
 - **INC-1043**: insufficient evidence. The system says so rather than inventing a cause.
@@ -68,22 +101,26 @@ web (React + Vite)  ──/api──▶  api (Fastify)  ──▶  SQLite (node:
 - **Safety:** the system prompt treats all evidence as untrusted data. Recommended checks that describe destructive actions (`rm -rf`, `kubectl delete`, `DROP TABLE`, …) are stripped server-side.
 - **Lifecycle:** `POST …/investigations` returns 202 and runs in the background (`queued → running → completed | failed`). The UI polls every 1.5 s. Malformed model output is retried once. Provider errors become a readable message and the incident page stays usable.
 - **RCA versions:** generating again creates a new version, so edits to earlier versions are kept.
+- **Numbers are checked, not trusted.** Any percentage, duration or count of 10 or more that the model writes in a hypothesis or RCA, and that does not appear in the evidence (or the engineer's own notes), is listed under *Validation notes* / *Check before publishing*. Flagged text is kept, not deleted, so a person decides.
+- **Trace:** each investigation stores its stage timings and counts, shown as *How this was produced*.
+- **Review state:** an incident is *Needs review* from its first completed investigation until a person records a verified root cause **and** marks the latest RCA reviewed. Re-running adds a run; earlier runs stay selectable.
 
 ### API
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/incidents?status=&severity=&service=&q=&page=&page_size=` | List and filter incidents |
-| `GET /api/incidents/:id` | Detail, latest investigation ID, RCA versions (`:id` = UUID or key) |
+| `GET /api/config` | Default mode, whether live is available, today's live usage |
+| `GET /api/incidents?status=&severity=&service=&q=&review=&page=&page_size=` | List and filter incidents; `review=pending` is the review queue |
+| `GET /api/incidents/:id` | Detail, latest investigation ID, all previous runs, RCA versions (`:id` = UUID or key) |
 | `GET /api/incidents/:id/evidence` | Logs, error signals, deployments, metrics, timeline, runbooks |
-| `POST /api/incidents/:id/investigations` | Start an investigation `{ question? }`, returns 202 |
-| `GET /api/investigations/:id` | Status, stage, hypotheses with resolved evidence, similar incidents |
+| `POST /api/incidents/:id/investigations` | Start an investigation `{ question?, mode? }`, returns 202. `mode: "live"` needs the `x-access-code` header (403 without it, 429 over the daily limit) |
+| `GET /api/investigations/:id` | Status, stage, hypotheses with resolved evidence, similar incidents, stage trace |
 | `POST /api/investigations/:id/feedback` | `{ hypothesis_id?, helpful?, comment?, verified_root_cause? }` |
-| `POST /api/incidents/:id/rca-drafts` | Generate an RCA version from a completed investigation |
+| `POST /api/incidents/:id/rca-drafts` | Generate an RCA version from a completed investigation (same mode as the investigation) |
 | `GET/PATCH /api/rca-drafts/:id` | Read or save RCA edits |
 | `GET /api/rca-drafts/:id/export.md` | Markdown export |
 | `GET /api/knowledge/:id` | Runbook or historical RCA document |
-| `POST /api/demo/reset` | Reseed (requires `DEMO_MODE=true` and a localhost caller) |
+| `POST /api/demo/reset` | Reseed (requires `DEMO_MODE=true` and a localhost caller or the access code) |
 
 ## Tests
 
@@ -93,15 +130,19 @@ npm run e2e         # Playwright smoke: queue → investigation → evidence →
 npm run typecheck
 ```
 
-Covered: happy path, insufficient evidence, invalid evidence IDs, prompt injection, secret redaction, retry on malformed output, provider failure, RCA edit persistence and versioning, demo reset (including determinism across runs), log immutability.
+Covered: happy path, insufficient evidence, invalid evidence IDs, prompt injection, secret redaction, retry on malformed output, provider failure, RCA edit persistence and versioning, demo reset (including determinism across runs), log immutability, live access code / daily limit / reset rules, unverified-number flags, stage trace, review queue states, run history, and static serving for the Docker image.
 
 ## Known limitations
 
 - Synthetic data only; there are no live integrations. A real adapter (one observability source, behind an interface) is the next step.
-- No authentication. The API binds to 127.0.0.1, and demo reset is restricted to localhost.
+- No user accounts. The API binds to 127.0.0.1 (Docker: published on 127.0.0.1 only); the shared access code only gates paid live runs and remote reset.
 - Retrieval is keyword/FTS5 only; there is no vector search.
 - Investigations run in-process. A server restart marks in-flight runs as failed.
 - Model confidence is qualitative and uncalibrated.
+
+### Ideas taken from, and rejected from, Settlement Sentinel
+
+A similar open-source project ([AvinJoseph29/Settlement-Sentinel](https://github.com/AvinJoseph29/Settlement-Sentinel)) was reviewed. Adopted: checking model-written numbers against the evidence, a per-run audit trail, a human-review queue, and keeping prior runs visible. Not adopted: automatic escalation/retry actions and Slack posts (the spec rules out autonomous actions), confidence derived from historical resolution rates (it measures how often similar incidents got fixed, not whether this diagnosis is right), and a three-database stack (SQLite FTS5 is enough at this scale).
 
 ## Deviations from the original spec
 
