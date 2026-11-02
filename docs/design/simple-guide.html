@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ResolveAI - simple guide</title>
+<style>
+@page { size: A4; margin: 19mm 18mm 18mm; }
+body { font: 10.3pt/1.45 Arial, Helvetica, sans-serif; color: #1f2933; }
+h1 { font-size: 25pt; margin: 0; }
+.tag { color: #2563eb; font-size: 12pt; margin: 2pt 0 9pt; }
+.lead { background: #eff6ff; border-left: 3pt solid #2563eb; padding: 7pt 10pt; margin-bottom: 12pt; }
+h2 { font-size: 15pt; margin: 15pt 0 6pt; break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 11pt 0 4pt; }
+p { margin: 0 0 6pt; }
+ul { margin: 0 0 7pt; padding-left: 15pt; }
+li { margin-bottom: 3pt; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+th { background: #1f2933; color: #fff; text-align: left; }
+th, td { border: 0.6pt solid #cbd2d9; padding: 4pt 6pt; vertical-align: top; }
+tr { break-inside: avoid; }
+.steps td:nth-child(1) { width: 24%; } .steps td:nth-child(3) { width: 13%; }
+.words td:nth-child(1) { width: 22%; }
+code { font: 9.3pt Consolas, "Courier New", monospace; }
+.flow { break-before: page; }
+.legend { display: flex; gap: 24pt; margin: 2pt 0 12pt; font-size: 9.5pt; }
+.legend i { display: inline-block; width: 12pt; height: 11pt; border: 1pt solid; border-radius: 2.5pt; margin-right: 5pt; vertical-align: -1.5pt; }
+svg { display: block; width: 100%; }
+svg .t { font: bold 12.5px Arial, sans-serif; fill: #1f2933; }
+svg .d { font: 10.5px Arial, sans-serif; fill: #3e4c59; }
+svg .n { font: italic 10.5px Arial, sans-serif; fill: #15803d; }
+.rules { break-before: page; }
+</style>
+</head>
+<body>
+<h1>ResolveAI</h1>
+<div class="tag">A helper that finds out why something broke, with proof</div>
+<div class="lead"><b>In one line:</b> when a live system breaks, ResolveAI collects the clues, asks Claude (an AI) for the most likely causes with proof, and lets an engineer check the answer and write the report.</div>
+
+<h2>1. The problem</h2>
+<p>Companies run software services that customers use all day. Sometimes a service breaks: pages are slow, payments fail, or errors appear. We call this an <b>incident</b>.</p>
+<p>When an incident happens, an engineer must find out why it happened, fix it, and later write a report about it. Today this is slow and hard:</p>
+<ul>
+<li>The clues are in many places: logs (messages the software writes), deploys (new versions that were released), and metrics (charts of speed and errors).</li>
+<li>The engineer has to open many tools and read a lot of text, often at night and under pressure.</li>
+<li>The same kind of problem may have happened before, but nobody remembers how it was fixed.</li>
+<li>After the fix, someone must write a report (an RCA, root cause analysis) by hand. Notes get lost.</li>
+<li>AI tools can read fast, but they sometimes make things up, like a number or a cause that has no proof.</li>
+<li>Logs can hold secrets (passwords, tokens, emails). These must not be sent to an AI.</li>
+</ul>
+<h3>What we want</h3>
+<ul>
+<li>Find the likely cause in minutes, not hours.</li>
+<li>Every answer must show its proof, so the engineer can trust it or reject it.</li>
+<li>A person always makes the final decision. The AI never changes the live system.</li>
+<li>The final report is mostly written for you, and you only edit it.</li>
+</ul>
+
+<h2 style="break-before: page">2. The solution in simple words</h2>
+<p>ResolveAI is a web app. The engineer opens an incident and clicks <b>Run investigation</b>. ResolveAI does the reading work, and Claude does the thinking work. Then a person checks it. These are the steps:</p>
+<table class="steps">
+<thead><tr><th>Step</th><th>What happens</th><th>Who</th></tr></thead>
+<tbody>
+<tr><td><b>1. Pick the incident</b></td><td>The engineer opens the incident from the list. They can also type a question, like &quot;Is the new release the cause?&quot;</td><td>Person</td></tr>
+<tr><td><b>2. Collect evidence</b></td><td>ResolveAI gathers the logs, deploys and metrics for that service, from just before the problem started until shortly after it was detected.</td><td>ResolveAI</td></tr>
+<tr><td><b>3. Look at the past</b></td><td>It searches old incidents for similar problems and how they were fixed.</td><td>ResolveAI</td></tr>
+<tr><td><b>4. Clean the evidence</b></td><td>It hides secrets (passwords, tokens, emails) and cuts the text to a safe size. Each clue gets an ID, like log:… or mcp:3.</td><td>ResolveAI</td></tr>
+<tr><td><b>5. Ask Claude</b></td><td>Claude reads the clean evidence and lists the likely causes, best first. Each cause must name the clue IDs that prove it, and say what is still unknown.</td><td>Claude (AI)</td></tr>
+<tr><td><b>6. Check the answer</b></td><td>ResolveAI removes any proof ID that does not exist, flags numbers (like &quot;35%&quot;) that are not in the evidence, and removes risky commands.</td><td>ResolveAI</td></tr>
+<tr><td><b>7. Show the result</b></td><td>The engineer sees the causes, the proof for each, and a &quot;How this was produced&quot; panel with every step and its time.</td><td>ResolveAI</td></tr>
+<tr><td><b>8. Engineer decides</b></td><td>The engineer marks each cause as helpful or not and writes the real root cause. They can run it again; old runs are kept.</td><td>Person</td></tr>
+<tr><td><b>9. Draft the report</b></td><td>Claude writes a first draft of the RCA report: impact, timeline, root cause, fixes and how to stop it happening again.</td><td>Claude (AI)</td></tr>
+<tr><td><b>10. Finish the report</b></td><td>The engineer edits the draft, marks it Reviewed and downloads it. The incident now shows Verified in the list.</td><td>Person</td></tr>
+</tbody>
+</table>
+
+<div class="flow">
+<h2>3. Workflow diagram</h2>
+<p>The boxes go from top to bottom. The colour shows who does each step.</p>
+<div class="legend"><span><i style="background:#dcfce7;border-color:#15803d"></i>A person</span><span><i style="background:#dbeafe;border-color:#2563eb"></i>ResolveAI (code)</span><span><i style="background:#ede9fe;border-color:#7c3aed"></i>Claude (AI)</span><span><i style="background:#fef3c7;border-color:#b45309"></i>Safety check</span></div>
+<svg viewBox="0 0 620 640" role="img" aria-label="Workflow from incident to reviewed report"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b7280"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#15803d"/></marker></defs><rect x="70" y="1" width="370" height="46" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.3"/><text x="82" y="20" class="t">1. Something breaks in production</text><text x="82" y="37" class="d">An alert opens an incident</text><line x1="255.0" y1="47" x2="255.0" y2="64" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="65" width="370" height="46" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.3"/><text x="82" y="84" class="t">2. Engineer opens the incident</text><text x="82" y="101" class="d">and clicks Run investigation (can add a question)</text><line x1="255.0" y1="111" x2="255.0" y2="128" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="129" width="370" height="46" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.3"/><text x="82" y="148" class="t">3. Collect evidence</text><text x="82" y="165" class="d">logs, recent deploys, metrics for that service and time</text><line x1="255.0" y1="175" x2="255.0" y2="192" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="193" width="370" height="46" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.3"/><text x="82" y="212" class="t">4. Find similar past incidents</text><text x="82" y="229" class="d">and how they were fixed</text><line x1="255.0" y1="239" x2="255.0" y2="256" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="257" width="370" height="46" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.3"/><text x="82" y="276" class="t">5. Clean the evidence</text><text x="82" y="293" class="d">hide passwords, tokens, emails; trim to size</text><line x1="255.0" y1="303" x2="255.0" y2="320" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="321" width="370" height="46" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.3"/><text x="82" y="340" class="t">6. Claude suggests likely causes</text><text x="82" y="357" class="d">ranked, each one must point to evidence</text><line x1="255.0" y1="367" x2="255.0" y2="384" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="385" width="370" height="46" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.3"/><text x="82" y="404" class="t">7. Safety check</text><text x="82" y="421" class="d">drop fake proof, flag made-up numbers, drop risky commands</text><line x1="255.0" y1="431" x2="255.0" y2="448" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="449" width="370" height="46" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.3"/><text x="82" y="468" class="t">8. Engineer reviews the findings</text><text x="82" y="485" class="d">says helpful or not, writes the real cause</text><line x1="255.0" y1="495" x2="255.0" y2="512" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="513" width="370" height="46" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.3"/><text x="82" y="532" class="t">9. Claude drafts the RCA report</text><text x="82" y="549" class="d">impact, timeline, root cause, fixes</text><line x1="255.0" y1="559" x2="255.0" y2="576" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a)"/><rect x="70" y="577" width="370" height="46" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.3"/><text x="82" y="596" class="t">10. Engineer edits and marks Reviewed</text><text x="82" y="613" class="d">export as a Markdown file; incident = Verified</text><path d="M440 472.0H474V88.0H442" fill="none" stroke="#15803d" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#g)"/><text x="484" y="242.0" class="n">Not sure?</text><text x="484" y="257.0" class="n">Ask a new</text><text x="484" y="272.0" class="n">question and</text><text x="484" y="287.0" class="n">run again.</text><text x="484" y="302.0" class="n">Old runs</text><text x="484" y="317.0" class="n">are kept.</text></svg>
+</div>
+
+<div class="rules">
+<h2>4. Safety rules</h2>
+<ul>
+<li><b>No proof, no claim.</b> Every cause must point to real evidence. Fake proof is removed.</li>
+<li><b>Numbers are checked.</b> If Claude writes a number that is not in the evidence, it is flagged so the engineer sees it.</li>
+<li><b>Secrets stay private.</b> Passwords, tokens and emails are hidden before anything goes to Claude.</li>
+<li><b>The AI only advises.</b> It never runs commands, restarts servers or rolls back releases.</li>
+<li><b>A person has the last word.</b> An incident is only Verified after a person confirms the cause and reviews the report.</li>
+<li><b>Cost is controlled.</b> By default the app uses saved (recorded) answers, which cost nothing. Live Claude must be switched on in the settings, and has a daily limit.</li>
+</ul>
+
+<h2>5. How to run it</h2>
+<p><b>Get the code:</b> run <code>git clone https://github.com/ratnkumarsingh/resolveai-agentic.git</code>, then <code>cd resolveai-agentic</code>.</p>
+<p><b>On a developer computer:</b> install the .NET 10 SDK, run <code>dotnet run --project src/ResolveAI.App</code>, and open http://localhost:8787.</p>
+<p><b>In a Docker container on your own computer:</b> run <code>docker compose up -d --build</code> and open http://localhost:8787. The data is kept when the container restarts.</p>
+<p><b>To use live Claude:</b> put your API key in the <code>.env</code> file. Then either set <code>LLM_MODE=live</code>, or add an access code to the file and type it on the Settings page.</p>
+
+<h2>6. Words to know</h2>
+<table class="words"><tbody>
+<tr><td><b>Incident</b></td><td>A time when a live service is broken or slow.</td></tr>
+<tr><td><b>Log</b></td><td>A line of text the software writes about what it is doing, such as an error.</td></tr>
+<tr><td><b>Deploy</b></td><td>Releasing a new version of the software.</td></tr>
+<tr><td><b>Metric</b></td><td>A number measured over time, like error rate or response time.</td></tr>
+<tr><td><b>Evidence</b></td><td>The clues (logs, deploys, metrics) that ResolveAI collects.</td></tr>
+<tr><td><b>Hypothesis</b></td><td>A possible cause that still needs to be checked.</td></tr>
+<tr><td><b>Root cause</b></td><td>The real reason the incident happened.</td></tr>
+<tr><td><b>RCA</b></td><td>Root cause analysis: the report written after an incident.</td></tr>
+<tr><td><b>Recorded mode</b></td><td>The app uses saved answers instead of calling Claude. Free and always the same.</td></tr>
+<tr><td><b>Live mode</b></td><td>The app calls Claude for real. Needs an API key and costs a little money.</td></tr>
+</tbody></table>
+</div>
+</body>
+</html>

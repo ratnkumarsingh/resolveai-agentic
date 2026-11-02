@@ -99,10 +99,10 @@
   <div class="sub">Technical Architecture and Design</div>
   <p>An incident investigation copilot: it gathers evidence from read-only systems, produces cited root-cause hypotheses and drafts an RCA for a person to verify. Nothing is executed automatically.</p>
   <dl>
-    <dt>Version</dt><dd>1.0, 31 October 2026</dd>
-    <dt>Describes</dt><dd>Branch <b>feature/dotnet-port</b>, commit <b>a247662</b></dd>
+    <dt>Version</dt><dd>1.1, 2 November 2026</dd>
+    <dt>Describes</dt><dd>Branch <b>main</b> of <b>resolveai-agentic</b>, created from <b>main</b> of <b>resolveai</b></dd>
     <dt>Stack</dt><dd>.NET 10, Blazor Server, ASP.NET Core, SQLite, MCP, Claude</dd>
-    <dt>Status</dt><dd>Working demo with synthetic data. Live Claude not yet run for real.</dd>
+    <dt>Status</dt><dd>Working demo with synthetic data. Live Claude run twice through a gateway; quality not evaluated.</dd>
   </dl>
 </div>
 
@@ -160,15 +160,14 @@
         <li>Full investigation pipeline in recorded mode</li>
         <li>Four read-only MCP servers, with 17 tools, including real SQL Server checks</li>
         <li>RCA drafting, editing, versioning and Markdown export</li>
-        <li>205 automated tests, plus a Docker image</li>
+        <li>217 automated tests and a Docker image, all passing in GitHub CI</li>
       </ul>
     </div>
     <div class="card"><h3>Not done or not proven</h3>
       <ul>
-        <li><b>Live Claude has never run against the real API.</b> It is only tested against a fake API.</li>
+        <li><b>Live analysis quality is unmeasured.</b> Claude has run for real only twice, through a gateway, and automated tests use a fake API.</li>
         <li>Data is synthetic, apart from optional SQL Server checks</li>
         <li>No user accounts; a shared access code gates paid runs</li>
-        <li>CI workflow has not yet run on GitHub</li>
         <li>Single process, with SQLite</li>
       </ul>
     </div>
@@ -323,7 +322,7 @@
       <path d="M425 284H252" class="l"/><text x="337" y="278" text-anchor="middle" class="s">one-sentence closing reply</text>
       <path d="M250 306H77" class="l"/><text x="160" y="300" text-anchor="middle" class="s">token usage for the trace</text>
     </svg>
-    <figcaption>Figure 4. Follow-up sequence. Tested against a fake API. It has not yet run against the real Claude API.</figcaption>
+    <figcaption>Figure 4. Follow-up sequence. Tested against a fake API, and used in two live runs through a gateway.</figcaption>
   </figure>
 
   <h2>3.3 Engineer review, through to the RCA</h2>
@@ -671,7 +670,7 @@ docker compose ps                 # wait for "healthy"</pre>
 
 <section class="chapter parta" id="s10">
   <h1>10. Testing</h1>
-  <p>The suite has 205 test cases: 196 in <code>tests/ResolveAI.Tests</code> and 9 in <code>tests/ResolveAI.E2E</code>. The former also pass on Linux, inside the Docker build.</p>
+  <p>The suite has 217 test cases: 203 in <code>tests/ResolveAI.Tests</code> and 14 in <code>tests/ResolveAI.E2E</code>. All of them pass on Linux in GitHub CI.</p>
 <pre>dotnet test tests/ResolveAI.Tests               # no external services needed
 MSSQL_TEST=1 dotnet test tests/ResolveAI.Tests  # also runs against local SQL Server
 dotnet test tests/ResolveAI.E2E                 # real browser, temporary database, free port
@@ -707,9 +706,8 @@ docker build --target test .                    # the same tests on Linux</pre>
   <table>
     <thead><tr><th style="width:30%">Item</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td><b>Live Claude</b></td><td>Never run against the real API, in the Node or .NET versions. No API key is configured. The port's request format is tested, but not real answers, cost, latency or the quality of the checks Claude picks.</td></tr>
+      <tr><td><b>Live Claude</b></td><td>Run twice on 2 November 2026 through an Anthropic-compatible gateway: INC-1046 and INC-1042, both completed. Never run directly against Anthropic's API. The quality of the answers and of the checks Claude picks has not been evaluated, and two runs say little about cost or latency.</td></tr>
       <tr><td><b>Recorded analyses</b></td><td>Written by hand. They prove the pipeline and UI, not the value of the analysis.</td></tr>
-      <tr><td><b>GitHub CI</b></td><td>The workflow hasn't run on GitHub. Its Docker checks and the unit tests were run locally on Linux; the C# browser tests ran only on Windows.</td></tr>
       <tr><td><b>Accuracy</b></td><td>No evaluation set exists to measure how often the top hypothesis is right.</td></tr>
     </tbody>
   </table>
@@ -724,7 +722,6 @@ docker build --target test .                    # the same tests on Linux</pre>
       <tr><td>Availability</td><td>One process; a restart fails runs in progress.</td><td>Accepted</td></tr>
       <tr><td>Retrieval</td><td>Keyword search only.</td><td>Not planned</td></tr>
       <tr><td>Confidence</td><td>Qualitative and uncalibrated.</td><td>Phase 1</td></tr>
-      <tr><td>Documentation</td><td><code>docs/ResolveAI-Simple-Guide.pdf</code> still gives the old <code>npm</code> commands.</td><td>Phase 4</td></tr>
     </tbody>
   </table>
 </section>

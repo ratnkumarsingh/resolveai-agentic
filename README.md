@@ -4,6 +4,24 @@ ResolveAI pulls an incident's logs, deployments, metrics, runbooks and past inci
 
 > **Demo dataset only.** Every incident, log, deployment and metric is synthetic seed data. No observability integrations are connected, and the UI says so on every page. AI output is always labelled as a draft or recommendation. Nothing is executed automatically.
 
+## About this repository
+
+`resolveai-agentic` was created on 2 November 2026 from `main` of [`resolveai`](https://github.com/ratnkumarsingh/resolveai), with all 27 commits, to develop a more agentic investigator. The original repositories are unchanged.
+
+Commit hashes differ from the original because a fake, Stripe-shaped demo value was replaced throughout the history, so that GitHub's push protection would accept it. The redaction demo now uses `sk_test_FAKEDEMOKEYNOTREAL0000000`, which the app redacts in the same way. It is not a real key.
+
+### Planned, not built
+
+Everything below is a plan. The app works as this README describes, and none of this exists yet:
+
+- A read-only coordinator that works with database, logs, deploys and metrics specialist agents, behind an `AGENT_MODE` setting.
+- Token budgets per run and per day, replacing the daily count of runs.
+- Specialist findings that the server validates against their cited evidence.
+- A scored evaluation on incidents with known answers. The new design becomes the default only if it beats today's pipeline.
+- Learning from human-reviewed incidents and approved playbooks, plus short-lived automatic hints that can't be cited.
+
+Agents will stay read-only, and every claim must still cite real evidence.
+
 ## Quick start
 
 ### What you need
@@ -22,14 +40,14 @@ Everything else is handled for you: NuGet packages restore automatically, SQLite
 | Git at run time | Commit details in deploy checks, for services with a `repo` set in `mcp.config.json` |
 | PowerShell 7 and Chromium | [Browser tests](#tests) |
 | Node.js | Regenerating the CSS after changing classes |
-| Python with `pypdf`, and Chrome | Rebuilding the architecture PDF (`docs/design/build_pdf.py`) |
+| Python with `pypdf`, and Chrome | Rebuilding the architecture PDF (`docs/design/build_pdf.py`). The Simple Guide and KT guide (`docs/design/build_guides.py`) also need `reportlab` |
 | Python or the `sqlite3` tool | Loading the optional sample data below |
 
 ### Run it
 
 ```bash
-git clone https://github.com/ratnkumarsingh/resolveai-dotnet.git
-cd resolveai-dotnet
+git clone https://github.com/ratnkumarsingh/resolveai-agentic.git
+cd resolveai-agentic
 dotnet run --project src/ResolveAI.App
 ```
 
