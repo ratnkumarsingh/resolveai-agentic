@@ -1,0 +1,16 @@
+{
+  "id": "INC-1042",
+  "category": "cross-system",
+  "source": "demo",
+  "why": "The cause needs a log line, a deployment and a config file together.",
+  "expected": {
+    "cause_all": [
+      "pool",
+      "\\b(20|100)\\b",
+      "v2\\.8\\.1|config"
+    ],
+    "required_evidence": [
+      "pool\\.max=20|max: 20|in_use=20"
+    ]
+  }
+}

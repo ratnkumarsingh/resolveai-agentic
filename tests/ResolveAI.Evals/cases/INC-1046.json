@@ -1,0 +1,15 @@
+{
+  "id": "INC-1046",
+  "category": "cross-system",
+  "source": "demo",
+  "why": "A scheduling change makes a long transaction hold locks on the table orders write to.",
+  "expected": {
+    "cause_all": [
+      "reconcil",
+      "lock|block|contention"
+    ],
+    "required_evidence": [
+      "reconcil"
+    ]
+  }
+}

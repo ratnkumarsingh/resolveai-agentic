@@ -1,0 +1,118 @@
+{
+  "id": "E-06",
+  "category": "cross-system",
+  "source": "fixture",
+  "why": "The carrier's errors are visible, but only promo-service shows why traffic jumped.",
+  "incident": {
+    "key": "EVAL-06",
+    "title": "Shipping labels failing",
+    "service_name": "shipping-api",
+    "severity": "SEV-2",
+    "started_at": "2026-09-19T10:06:00Z",
+    "detected_at": "2026-09-19T10:12:00Z",
+    "description": "Shipping label creation is failing for many orders.",
+    "impact_summary": "Orders are stuck waiting for labels."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-19T10:06:00Z",
+      "service": "shipping-api",
+      "level": "ERROR",
+      "message": "shipping-api: carrier responded 429 quota exceeded",
+      "signature": "carrier_429"
+    },
+    {
+      "ts": "2026-09-19T10:07:30Z",
+      "service": "shipping-api",
+      "level": "ERROR",
+      "message": "shipping-api: carrier responded 429 quota exceeded",
+      "signature": "carrier_429"
+    },
+    {
+      "ts": "2026-09-19T10:08:10Z",
+      "service": "shipping-api",
+      "level": "WARN",
+      "message": "shipping-api: label backlog 1400"
+    }
+  ],
+  "hidden_logs": [
+    {
+      "ts": "2026-09-19T10:00:00Z",
+      "service": "promo-service",
+      "level": "INFO",
+      "message": "promo-service: free shipping campaign FREESHIP-SEP is now live for all customers"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Label requests",
+      "unit": "per min",
+      "baseline": 40,
+      "peak": 310,
+      "observed": "2026-09-19T10:15:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-19T10:12:00Z",
+      "kind": "alert",
+      "description": "Alert fired: label failure rate above 10%"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "promo-service",
+      "version": "v4.0.0",
+      "deployed_at": "2026-09-19T09:58:00Z",
+      "change_summary": "Launch free shipping campaign",
+      "commit": "dd66ee7",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "campaigns/sep.yaml",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "+FREESHIP-SEP: { audience: all }\n",
+      "in_db": false
+    }
+  ],
+  "services": {
+    "shipping-api": {
+      "key_metrics": [
+        "Label requests"
+      ]
+    }
+  },
+  "series": {
+    "shipping-api": {
+      "Label requests": {
+        "unit": "per min",
+        "points": [
+          [
+            "2026-09-19T09:50:00Z",
+            40
+          ],
+          [
+            "2026-09-19T10:02:00Z",
+            180
+          ],
+          [
+            "2026-09-19T10:06:00Z",
+            310
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "campaign|promo|freeship",
+      "quota|rate.?limit|429"
+    ],
+    "required_evidence": [
+      "campaign|FREESHIP"
+    ]
+  }
+}

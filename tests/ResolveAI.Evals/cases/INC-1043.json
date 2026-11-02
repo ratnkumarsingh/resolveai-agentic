@@ -1,0 +1,9 @@
+{
+  "id": "INC-1043",
+  "category": "insufficient",
+  "source": "demo",
+  "why": "There is almost no signal, so the honest answer is that the evidence is not enough.",
+  "expected": {
+    "kind": "insufficient"
+  }
+}

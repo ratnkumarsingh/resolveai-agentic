@@ -11,6 +11,7 @@ RUN dotnet publish src/ResolveAI.App -c Release -o /app
 # --- test: optional, runs the tests on Linux: docker build --target test . ---
 FROM build AS test
 COPY tests/ResolveAI.Tests tests/ResolveAI.Tests
+COPY tests/ResolveAI.Evals tests/ResolveAI.Evals
 COPY demo-systems demo-systems
 COPY mcp.config.example.json ./
 RUN dotnet test tests/ResolveAI.Tests

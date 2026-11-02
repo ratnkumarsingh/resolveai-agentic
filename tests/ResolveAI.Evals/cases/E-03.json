@@ -1,0 +1,126 @@
+{
+  "id": "E-03",
+  "category": "cross-system",
+  "source": "fixture",
+  "why": "The change summary is vague. The batch size change is only in the patch and a config file.",
+  "incident": {
+    "key": "EVAL-03",
+    "title": "Report generation crash loop",
+    "service_name": "report-worker",
+    "severity": "SEV-2",
+    "started_at": "2026-09-16T02:10:00Z",
+    "detected_at": "2026-09-16T02:15:00Z",
+    "description": "Report workers keep restarting and customer reports are not being produced.",
+    "impact_summary": "Scheduled reports delayed."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-16T02:10:00Z",
+      "service": "report-worker",
+      "level": "ERROR",
+      "message": "report-worker: container exited with code 137",
+      "signature": "exit_137"
+    },
+    {
+      "ts": "2026-09-16T02:11:30Z",
+      "service": "report-worker",
+      "level": "ERROR",
+      "message": "report-worker: container exited with code 137",
+      "signature": "exit_137"
+    },
+    {
+      "ts": "2026-09-16T02:12:40Z",
+      "service": "report-worker",
+      "level": "WARN",
+      "message": "report-worker: restart count 4 for pod report-worker-2"
+    }
+  ],
+  "hidden_logs": [
+    {
+      "ts": "2026-09-16T02:09:30Z",
+      "service": "report-worker",
+      "level": "INFO",
+      "message": "report-worker: loading batch of 50000 rows into memory"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Worker memory",
+      "unit": "GiB",
+      "baseline": 0.6,
+      "peak": 2,
+      "observed": "2026-09-16T02:20:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-16T01:30:00Z",
+      "kind": "deployment",
+      "description": "report-worker v2.3.0 released"
+    },
+    {
+      "ts": "2026-09-16T02:15:00Z",
+      "kind": "alert",
+      "description": "Alert fired: report-worker restart loop"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "report-worker",
+      "version": "v2.3.0",
+      "deployed_at": "2026-09-16T01:30:00Z",
+      "change_summary": "Tune report generation settings",
+      "commit": "aa44bb5",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "config/worker.yaml",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "-batchSize: 500\n+batchSize: 50000\n",
+      "in_db": true
+    }
+  ],
+  "files": {
+    "report-worker/worker.yaml": "# Loaded at startup\nbatchSize: 50000\nmemoryLimit: 2Gi\n"
+  },
+  "services": {
+    "report-worker": {
+      "key_metrics": [
+        "Worker memory"
+      ]
+    }
+  },
+  "series": {
+    "report-worker": {
+      "Worker memory": {
+        "unit": "GiB",
+        "points": [
+          [
+            "2026-09-16T01:50:00Z",
+            0.6
+          ],
+          [
+            "2026-09-16T02:05:00Z",
+            1.7
+          ],
+          [
+            "2026-09-16T02:10:00Z",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "batch",
+      "memory|oom|137"
+    ],
+    "required_evidence": [
+      "batch"
+    ]
+  }
+}

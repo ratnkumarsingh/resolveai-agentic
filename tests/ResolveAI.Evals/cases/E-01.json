@@ -1,0 +1,188 @@
+{
+  "id": "E-01",
+  "category": "cross-system",
+  "source": "fixture",
+  "why": "Only the inventory-svc deploy feed, logs and metrics show the cause, and the database holds none of them.",
+  "incident": {
+    "key": "EVAL-01",
+    "title": "Checkout requests timing out",
+    "service_name": "checkout-api",
+    "severity": "SEV-1",
+    "started_at": "2026-09-14T09:02:00Z",
+    "detected_at": "2026-09-14T09:05:00Z",
+    "description": "Checkout requests are timing out for most customers.",
+    "impact_summary": "About 19% of checkouts failing."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-14T09:02:11Z",
+      "service": "checkout-api",
+      "level": "ERROR",
+      "message": "checkout-api: call to inventory-svc timed out after 2000ms; request_id=c-101",
+      "signature": "inventory_call_timeout"
+    },
+    {
+      "ts": "2026-09-14T09:02:40Z",
+      "service": "checkout-api",
+      "level": "ERROR",
+      "message": "checkout-api: call to inventory-svc timed out after 2000ms; request_id=c-118",
+      "signature": "inventory_call_timeout"
+    },
+    {
+      "ts": "2026-09-14T09:03:30Z",
+      "service": "checkout-api",
+      "level": "WARN",
+      "message": "checkout-api: retry budget for inventory-svc nearly used"
+    },
+    {
+      "ts": "2026-09-14T09:04:05Z",
+      "service": "checkout-api",
+      "level": "ERROR",
+      "message": "checkout-api: order failed: inventory check unavailable; request_id=c-140",
+      "signature": "order_failed"
+    }
+  ],
+  "hidden_logs": [
+    {
+      "ts": "2026-09-14T08:56:02Z",
+      "service": "inventory-svc",
+      "level": "INFO",
+      "message": "inventory-svc: v3.1.0 started; stock-level read cache removed, all reads go to the database"
+    },
+    {
+      "ts": "2026-09-14T09:01:40Z",
+      "service": "inventory-svc",
+      "level": "WARN",
+      "message": "inventory-svc: stock query took 1840ms; database read rate 4100/s"
+    },
+    {
+      "ts": "2026-09-14T09:03:10Z",
+      "service": "inventory-svc",
+      "level": "ERROR",
+      "message": "inventory-svc: request queue full; shedding requests"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Checkout error rate",
+      "unit": "%",
+      "baseline": 0.3,
+      "peak": 19,
+      "observed": "2026-09-14T09:10:00Z"
+    },
+    {
+      "name": "Inventory call p95",
+      "unit": "ms",
+      "baseline": 90,
+      "peak": 2300,
+      "observed": "2026-09-14T09:10:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-14T09:02:00Z",
+      "kind": "symptom",
+      "description": "First checkout timeouts"
+    },
+    {
+      "ts": "2026-09-14T09:05:00Z",
+      "kind": "alert",
+      "description": "Alert fired: checkout error rate above 5%"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "checkout-api",
+      "version": "v6.2.0",
+      "deployed_at": "2026-09-13T16:00:00Z",
+      "change_summary": "Update receipt email wording",
+      "commit": "aa11bb2",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "src/receipt.ts",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "-Thanks!\n+Thank you!\n",
+      "in_db": true
+    },
+    {
+      "service": "inventory-svc",
+      "version": "v3.1.0",
+      "deployed_at": "2026-09-14T08:55:00Z",
+      "change_summary": "Remove stock-level read cache",
+      "commit": "cc22dd3",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "src/stock.ts",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "-  const hit = cache.get(sku);\n-  if (hit) return hit;\n   return db.readStock(sku);\n",
+      "in_db": false
+    }
+  ],
+  "services": {
+    "checkout-api": {
+      "key_metrics": [
+        "Checkout error rate"
+      ]
+    }
+  },
+  "series": {
+    "checkout-api": {
+      "Checkout error rate": {
+        "unit": "%",
+        "points": [
+          [
+            "2026-09-14T08:50:00Z",
+            0.3
+          ],
+          [
+            "2026-09-14T09:00:00Z",
+            0.3
+          ],
+          [
+            "2026-09-14T09:05:00Z",
+            19
+          ]
+        ]
+      }
+    },
+    "inventory-svc": {
+      "Database reads": {
+        "unit": "per sec",
+        "points": [
+          [
+            "2026-09-14T08:50:00Z",
+            120
+          ],
+          [
+            "2026-09-14T08:58:00Z",
+            4100
+          ],
+          [
+            "2026-09-14T09:05:00Z",
+            4100
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "inventory",
+      "cache"
+    ],
+    "required_evidence": [
+      "cache"
+    ],
+    "forbidden_top_title": [
+      "receipt|v6\\.2\\.0"
+    ]
+  }
+}

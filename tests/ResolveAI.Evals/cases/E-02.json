@@ -1,0 +1,128 @@
+{
+  "id": "E-02",
+  "category": "misleading",
+  "source": "fixture",
+  "why": "A release lands 40 minutes earlier, but it only changes wording. The cause is a certificate that expired.",
+  "incident": {
+    "key": "EVAL-02",
+    "title": "Sign-ins failing",
+    "service_name": "auth-service",
+    "severity": "SEV-1",
+    "started_at": "2026-09-15T06:00:05Z",
+    "detected_at": "2026-09-15T06:03:00Z",
+    "description": "All sign-ins are failing shortly after this morning's release.",
+    "impact_summary": "No customer can sign in."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-15T05:20:02Z",
+      "service": "auth-service",
+      "level": "INFO",
+      "message": "deploy-agent: auth-service v9.4.2 rollout finished"
+    },
+    {
+      "ts": "2026-09-15T06:00:05Z",
+      "service": "auth-service",
+      "level": "ERROR",
+      "message": "auth-service: token exchange with idp.internal failed: x509: certificate has expired or is not yet valid",
+      "signature": "idp_tls_failed"
+    },
+    {
+      "ts": "2026-09-15T06:00:49Z",
+      "service": "auth-service",
+      "level": "ERROR",
+      "message": "auth-service: token exchange with idp.internal failed: x509: certificate has expired or is not yet valid",
+      "signature": "idp_tls_failed"
+    },
+    {
+      "ts": "2026-09-15T06:02:12Z",
+      "service": "auth-service",
+      "level": "ERROR",
+      "message": "auth-service: sign-in failed; identity provider unavailable",
+      "signature": "signin_failed"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Sign-in failure rate",
+      "unit": "%",
+      "baseline": 0.5,
+      "peak": 100,
+      "observed": "2026-09-15T06:10:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-15T05:20:00Z",
+      "kind": "deployment",
+      "description": "auth-service v9.4.2 released"
+    },
+    {
+      "ts": "2026-09-15T06:03:00Z",
+      "kind": "alert",
+      "description": "Alert fired: sign-in failures above 20%"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "auth-service",
+      "version": "v9.4.2",
+      "deployed_at": "2026-09-15T05:20:00Z",
+      "change_summary": "Update sign-in page wording",
+      "commit": "ee33ff4",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "templates/login.html",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "-Sign in\n+Log in\n",
+      "in_db": true
+    }
+  ],
+  "files": {
+    "auth-service/certs.txt": "# Client certificates\nidp-client.pem  not_after=2026-09-15T06:00:00Z  issuer=internal-ca\n"
+  },
+  "services": {
+    "auth-service": {
+      "key_metrics": [
+        "Sign-in failure rate"
+      ]
+    }
+  },
+  "series": {
+    "auth-service": {
+      "Sign-in failure rate": {
+        "unit": "%",
+        "points": [
+          [
+            "2026-09-15T05:50:00Z",
+            0.5
+          ],
+          [
+            "2026-09-15T06:00:00Z",
+            0.5
+          ],
+          [
+            "2026-09-15T06:02:00Z",
+            100
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "cert",
+      "expir"
+    ],
+    "required_evidence": [
+      "expired|not_after"
+    ],
+    "forbidden_top_title": [
+      "v9\\.4\\.2|wording|release|deploy"
+    ]
+  }
+}

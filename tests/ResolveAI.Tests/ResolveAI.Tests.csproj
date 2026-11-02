@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\ResolveAI.App\ResolveAI.App.csproj" />
     <ProjectReference Include="..\..\src\ResolveAI.Mcp\ResolveAI.Mcp.csproj" />
     <ProjectReference Include="..\..\src\ResolveAI.Contracts\ResolveAI.Contracts.csproj" />
+    <ProjectReference Include="..\ResolveAI.Evals\ResolveAI.Evals.csproj" />
   </ItemGroup>
 
 </Project>

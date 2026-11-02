@@ -1,0 +1,15 @@
+{
+  "id": "INC-1045",
+  "category": "cross-system",
+  "source": "demo",
+  "why": "The release moved storage to a volume that the mount table shows is read-only.",
+  "expected": {
+    "cause_all": [
+      "read.?only|\\bro\\b|mount|permission",
+      "archive|v1\\.4\\.0"
+    ],
+    "required_evidence": [
+      "EACCES|ro,relatime|invoices-archive"
+    ]
+  }
+}
