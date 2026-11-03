@@ -19,7 +19,7 @@ else
                         <td class="whitespace-nowrap px-3 py-1.5 text-slate-500">@Ui.FormatTime(l.Timestamp)</td>
                         <td class="px-3 py-1.5"><span class="@Ui.Cx("rounded-sm px-1", Ui.LogLevel(l.Level))">@l.Level</span></td>
                         <td class="whitespace-nowrap px-3 py-1.5 text-slate-600">@l.ServiceName</td>
-                        <td class="px-3 py-1.5 break-all">
+                        <td class="px-3 py-1.5 break-all text-slate-700">
                             @l.Message
                             @if (!string.IsNullOrEmpty(l.ErrorSignature))
                             {
