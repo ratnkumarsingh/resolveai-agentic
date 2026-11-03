@@ -42,26 +42,18 @@ public static class Ui
 
     public static string Severity(string severity) => severity switch
     {
-        "SEV-1" => "bg-red-600 text-white",
-        "SEV-2" => "bg-orange-500 text-white",
-        "SEV-3" => "bg-amber-200 text-amber-900",
+        "SEV-1" => "bg-red-100 text-red-700 ring-1 ring-red-300",
+        "SEV-2" => "bg-orange-100 text-orange-700",
+        "SEV-3" => "bg-amber-100 text-amber-700",
         _ => "bg-slate-200 text-slate-700",
-    };
-
-    public static string SeverityRail(string severity) => severity switch
-    {
-        "SEV-1" => "from-red-500 to-rose-700",
-        "SEV-2" => "from-orange-400 to-orange-600",
-        "SEV-3" => "from-amber-300 to-amber-500",
-        _ => "from-slate-300 to-slate-500",
     };
 
     public static string SeverityGlow(string severity) => severity switch
     {
-        "SEV-1" => "hover:shadow-red-200",
-        "SEV-2" => "hover:shadow-orange-200",
-        "SEV-3" => "hover:shadow-amber-200",
-        _ => "hover:shadow-slate-200",
+        "SEV-1" => "glow-red",
+        "SEV-2" => "glow-orange",
+        "SEV-3" => "glow-amber",
+        _ => "",
     };
 
     /// <summary>A fixed colour per service name, so a service is easy to spot down the queue. The colour carries no status.</summary>
@@ -69,25 +61,42 @@ public static class Ui
     {
         string[] palette =
         [
-            "bg-sky-100 text-sky-800", "bg-violet-100 text-violet-800", "bg-teal-100 text-teal-800", "bg-fuchsia-100 text-fuchsia-800",
-            "bg-blue-100 text-blue-800", "bg-indigo-100 text-indigo-800", "bg-cyan-100 text-cyan-800", "bg-purple-100 text-purple-800",
+            "bg-sky-100 text-sky-700", "bg-violet-100 text-violet-700", "bg-teal-100 text-teal-700",
+            "bg-pink-100 text-pink-700", "bg-cyan-100 text-cyan-700",
         ];
         return palette[service.Sum(c => c) % palette.Length];
     }
 
+    public static string SeverityTile(string severity) => severity switch
+    {
+        "SEV-1" => "tile-red",
+        "SEV-2" => "tile-orange",
+        "SEV-3" => "tile-amber",
+        _ => "tile-blue",
+    };
+
     public static string Status(string status) => status switch
     {
-        "open" => "bg-red-50 text-red-700 ring-red-200",
-        "investigating" => "bg-amber-50 text-amber-800 ring-amber-200",
-        "mitigated" => "bg-sky-50 text-sky-700 ring-sky-200",
-        "resolved" => "bg-emerald-50 text-emerald-700 ring-emerald-200",
-        _ => "",
+        "open" => "bg-red-100 text-red-700",
+        "investigating" => "bg-amber-100 text-amber-700",
+        "mitigated" => "bg-sky-100 text-sky-700",
+        "resolved" => "bg-emerald-100 text-emerald-700",
+        _ => "bg-slate-100 text-slate-700",
+    };
+
+    public static string StatusDot(string status) => status switch
+    {
+        "open" => "bg-red-400",
+        "investigating" => "bg-amber-400",
+        "mitigated" => "bg-sky-400",
+        "resolved" => "bg-emerald-400",
+        _ => "bg-slate-400",
     };
 
     public static string Confidence(string confidence) => confidence switch
     {
-        "high" => "bg-indigo-600 text-white",
-        "medium" => "bg-indigo-100 text-indigo-800",
+        "high" => "bg-emerald-100 text-emerald-700",
+        "medium" => "bg-amber-100 text-amber-700",
         "low" => "bg-slate-100 text-slate-600",
         _ => "",
     };
@@ -102,19 +111,19 @@ public static class Ui
 
     public static string EvidenceKind(string kind) => kind switch
     {
-        "log" => "bg-slate-100 text-slate-700",
-        "dep" => "bg-indigo-100 text-indigo-800",
-        "met" => "bg-red-50 text-red-700",
-        "tl" => "bg-amber-50 text-amber-800",
-        "doc" => "bg-emerald-50 text-emerald-800",
-        "hist" => "bg-violet-50 text-violet-800",
-        _ => "",
+        "log" => "bg-sky-100 text-sky-700",
+        "dep" => "bg-violet-100 text-violet-700",
+        "met" => "bg-teal-100 text-teal-700",
+        "tl" => "bg-amber-100 text-amber-700",
+        "doc" => "bg-emerald-100 text-emerald-700",
+        "hist" => "bg-pink-100 text-pink-700",
+        _ => "bg-slate-100 text-slate-700",
     };
 
     public static (string Label, string Class, string Title) Review(string state) => state switch
     {
-        "pending" => ("Needs review", "bg-amber-100 text-amber-900", "AI findings exist but no one has verified the root cause and reviewed the RCA"),
-        "verified" => ("Verified", "bg-emerald-100 text-emerald-800", "Root cause verified and RCA marked reviewed by a person"),
+        "pending" => ("Needs review", "bg-amber-100 text-amber-700", "AI findings exist but no one has verified the root cause and reviewed the RCA"),
+        "verified" => ("Verified", "bg-emerald-100 text-emerald-700", "Root cause verified and RCA marked reviewed by a person"),
         _ => ("Not investigated", "bg-slate-100 text-slate-600", "No completed investigation yet"),
     };
 
@@ -138,7 +147,7 @@ public static class Ui
 
 /// <summary>
 /// One colour per system, used everywhere a system appears: pills, cards, citations and the trace.
-/// Text is always the -800 shade on a -50/-100 background (WCAG AA); saturated gradients carry only icons.
+/// Chips use a light shade on a translucent tint of the same colour; the icon tile and the bar carry the saturated gradient.
 /// </summary>
 public sealed record SystemStyle(string Label, string Blurb, string Tile, string Soft, string Text, string Chip, string Dot, string Ring, string Bar, string Accent, string Hollow)
 {
@@ -147,17 +156,17 @@ public sealed record SystemStyle(string Label, string Blurb, string Tile, string
     private static readonly Dictionary<string, SystemStyle> All = new()
     {
         ["database"] = new("Database", "SQL Server health, blocking chains, long queries, deadlocks, errors and file space.",
-            "bg-gradient-to-br from-sky-500 to-indigo-600", "bg-sky-50", "text-sky-800", "bg-sky-100 text-sky-800", "bg-sky-500", "ring-sky-200",
-            "bg-gradient-to-r from-sky-400 to-indigo-500", "border-l-sky-500", "bg-white ring-2 ring-sky-500"),
+            "tile-sky gloss text-white", "bg-sky-100", "text-sky-700", "bg-sky-100 text-sky-700", "bg-sky-500", "ring-sky-200",
+            "bg-gradient-to-r from-sky-400 to-indigo-500", "border-l-sky-500", "bg-surface ring-2 ring-sky-500"),
         ["files"] = new("Files & logs", "Search log files, read the end of a file, list recent changes, check a path and free disk space.",
-            "bg-gradient-to-br from-amber-500 to-orange-600", "bg-amber-50", "text-amber-800", "bg-amber-100 text-amber-800", "bg-amber-500", "ring-amber-200",
-            "bg-gradient-to-r from-amber-400 to-orange-500", "border-l-amber-500", "bg-white ring-2 ring-amber-500"),
+            "tile-amber gloss text-white", "bg-amber-100", "text-amber-700", "bg-amber-100 text-amber-700", "bg-amber-500", "ring-amber-200",
+            "bg-gradient-to-r from-amber-400 to-orange-500", "border-l-amber-500", "bg-surface ring-2 ring-amber-500"),
         ["deploys"] = new("Deploys & Git", "Releases and commits in a time window, and what a release changed (files and a short diff).",
-            "bg-gradient-to-br from-violet-500 to-fuchsia-600", "bg-violet-50", "text-violet-800", "bg-violet-100 text-violet-800", "bg-violet-500", "ring-violet-200",
-            "bg-gradient-to-r from-violet-400 to-fuchsia-500", "border-l-violet-500", "bg-white ring-2 ring-violet-500"),
+            "tile-violet gloss text-white", "bg-violet-100", "text-violet-700", "bg-violet-100 text-violet-700", "bg-violet-500", "ring-violet-200",
+            "bg-gradient-to-r from-violet-400 to-fuchsia-500", "border-l-violet-500", "bg-surface ring-2 ring-violet-500"),
         ["metrics"] = new("Metrics & host", "A metric's baseline, peak and timing for a service, and the host's CPU and memory right now.",
-            "bg-gradient-to-br from-emerald-500 to-teal-600", "bg-emerald-50", "text-emerald-800", "bg-emerald-100 text-emerald-800", "bg-emerald-500", "ring-emerald-200",
-            "bg-gradient-to-r from-emerald-400 to-teal-500", "border-l-emerald-500", "bg-white ring-2 ring-emerald-500"),
+            "tile-green gloss text-white", "bg-emerald-100", "text-emerald-700", "bg-emerald-100 text-emerald-700", "bg-emerald-500", "ring-emerald-200",
+            "bg-gradient-to-r from-emerald-400 to-teal-500", "border-l-emerald-500", "bg-surface ring-2 ring-emerald-500"),
     };
 
     public static SystemStyle Of(string system) => All.GetValueOrDefault(system) ?? All["files"];

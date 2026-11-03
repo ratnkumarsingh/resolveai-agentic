@@ -2,7 +2,7 @@
 @if (Statuses.Count > 0)
 {
     <div class="flex flex-wrap items-center gap-2" data-testid="systems-strip">
-        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Systems checked</span>
+        <span class="text-xs font-semibold uppercase tracking-wide text-sky-700">Systems checked</span>
         @foreach (var system in SystemStyle.Order)
         {
             var style = SystemStyle.Of(system);
@@ -21,15 +21,15 @@
                 }
                 else
                 {
-                    <span class="@Ui.Cx("grid h-5 w-5 place-items-center rounded-full text-white", style.Tile)"><SystemIcon System="@system" Class="h-3 w-3" /></span>
+                    <span class="@Ui.Cx("grid h-5 w-5 place-items-center rounded-full", style.Tile)"><SystemIcon System="@system" Class="h-3 w-3" /></span>
                 }
                 @style.Label
-                <span class="@Ui.Cx("rounded-full px-1.5 text-[11px] font-semibold", off ? "bg-slate-200 text-slate-600" : "bg-white/80")">
+                <span class="@Ui.Cx("rounded-full px-1.5 text-[11px] font-medium", off ? "bg-slate-200 text-slate-600" : "bg-slate-50")">
                     @(off ? "off" : waiting ? "…" : mine.Count.ToString())
                 </span>
                 @if (failed > 0)
                 {
-                    <span class="rounded-full bg-red-100 px-1.5 text-[11px] font-semibold text-red-700">@failed failed</span>
+                    <span class="rounded-full bg-red-100 px-1.5 text-[11px] font-medium text-red-700">@failed failed</span>
                 }
             </span>
         }

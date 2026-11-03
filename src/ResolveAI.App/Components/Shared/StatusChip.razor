@@ -1,4 +1,4 @@
-<span class="@Ui.Cx("rounded-full px-2 py-0.5 text-xs font-medium capitalize ring-1", Ui.Status(Status))">@Status</span>
+<span class="@Ui.Cx("inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs font-medium capitalize", Ui.Status(Status))"><span aria-hidden="true" class="@Ui.Cx("h-1.5 w-1.5 rounded-full", Ui.StatusDot(Status))"></span>@Status</span>
 
 @code {
     [Parameter, EditorRequired] public string Status { get; set; } = "";

@@ -1,6 +1,6 @@
 <div class="grid gap-4 lg:grid-cols-3">
     <div class="space-y-4 lg:col-span-2">
-        <Card Title="Metrics (baseline → peak)">
+        <Card Title="Metrics (baseline → peak)" Icon="metrics">
             @if (Evidence.Metrics.Count == 0)
             {
                 <p class="text-sm text-slate-500">No metric snapshots recorded for this incident.</p>
@@ -17,7 +17,7 @@
                                 <span class="text-sm text-slate-500">@Ui.Number(m.Baseline) →</span>
                                 <span class="@Ui.Cx("text-xl font-semibold", big ? "text-red-700" : "text-slate-800")">@Ui.Number(m.Peak)</span>
                                 <span class="text-xs text-slate-500">@m.Unit</span>
-                                <span class="@Ui.Cx("ml-auto rounded px-1.5 text-xs font-medium", big ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600")">@Ratio(m.Baseline, m.Peak)</span>
+                                <span class="@Ui.Cx("ml-auto rounded-sm px-1.5 text-xs font-medium", big ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600")">@Ratio(m.Baseline, m.Peak)</span>
                             </div>
                         </div>
                     }
@@ -25,7 +25,7 @@
             }
         </Card>
 
-        <Card Title="Error signals">
+        <Card Title="Error signals" Icon="signals">
             @if (Evidence.ErrorSignals.Count == 0)
             {
                 <p class="text-sm text-slate-500">No error signatures found in the incident window.</p>
@@ -51,7 +51,7 @@
             }
         </Card>
 
-        <Card Title="Runbooks & guides">
+        <Card Title="Runbooks & guides" Icon="guides">
             @if (Evidence.Runbooks.Count == 0)
             {
                 <p class="text-sm text-slate-500">No runbooks for this service.</p>
@@ -71,7 +71,7 @@
         </Card>
     </div>
 
-    <Card Title="Timeline">
+    <Card Title="Timeline" Icon="timeline">
         @if (Evidence.Timeline.Count == 0)
         {
             <p class="text-sm text-slate-500">No timeline events.</p>
@@ -81,8 +81,8 @@
             <ol class="relative space-y-4 border-l border-slate-200 pl-4">
                 @foreach (var e in Evidence.Timeline)
                 {
-                    <li @key="e.Id" id="@Ui.RowId(e.Ref)" class="@Ui.Cx("relative rounded", Flash(e.Ref))">
-                        <span class="@Ui.Cx("absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full ring-2 ring-white", Dot(e))"></span>
+                    <li @key="e.Id" id="@Ui.RowId(e.Ref)" class="@Ui.Cx("relative rounded-sm", Flash(e.Ref))">
+                        <span class="@Ui.Cx("absolute -left-[25px] top-1 h-4 w-4 rounded-full", Dot(e))"></span>
                         <div class="text-xs text-slate-500">@Ui.FormatTime(e.Timestamp) · @e.Kind</div>
                         <div class="text-sm">@e.Description</div>
                     </li>
@@ -100,9 +100,9 @@
 
     private string Dot(TimelineEvent e) => e.Kind switch
     {
-        "deployment" => "bg-indigo-500",
-        "alert" => "bg-red-500",
-        _ => Js.ParseDate(e.Timestamp) >= Js.ParseDate(Evidence.Incident.StartedAt) ? "bg-amber-500" : "bg-slate-400",
+        "deployment" => "node node-lilac",
+        "alert" => "node node-rose",
+        _ => Js.ParseDate(e.Timestamp) >= Js.ParseDate(Evidence.Incident.StartedAt) ? "node node-amber" : "node node-mint",
     };
 
     private static string Ratio(double baseline, double peak)

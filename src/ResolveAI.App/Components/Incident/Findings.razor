@@ -7,7 +7,7 @@
         }
         <Empty Title="No investigation yet">
             <p>Run an investigation to gather evidence, search past incidents and get ranked hypotheses.</p>
-            <Btn Variant="primary" Class="mt-3" OnClick="OnRun">Run investigation</Btn>
+            <Btn Class="mt-3" OnClick="OnRun">Run investigation</Btn>
         </Empty>
     </div>
 }
@@ -44,9 +44,10 @@ else
             <ObservedFacts Evidence="Evidence" />
         }
 
-        <section class="rounded-lg border border-violet-200 bg-violet-50/50 p-4">
+        <section class="rounded-lg border border-slate-200 bg-surface p-4">
             <div class="mb-2 flex flex-wrap items-center gap-2">
-                <h3 class="text-sm font-semibold text-slate-800">Inferred analysis</h3>
+                <SectionTile Kind="analysis" />
+                <h3 class="text-sm font-semibold text-slate-900">Inferred analysis</h3>
                 <AiBadge>@(Inv.LlmMode == "live" ? $"AI-generated ({Inv.ModelName ?? "Claude"}) — not confirmed" : "Recorded analysis — not confirmed")</AiBadge>
                 <span class="ml-auto text-xs text-slate-500">
                     @Inv.EvidenceCount evidence records · completed @Ui.FormatTime(Inv.CompletedAt) · prompt @Inv.PromptVersion
@@ -59,7 +60,7 @@ else
             }
         </section>
 
-        <div id="hypothesis-list" class="scroll-mt-4 space-y-3">
+        <div id="hypothesis-list" class="stagger scroll-mt-4 space-y-3">
             @foreach (var h in Inv.Hypotheses)
             {
                 <HypothesisCard @key="h.Id" H="h" InvestigationId="@Inv.Id" OnEvidence="OnEvidence" OnChanged="OnChanged" />
@@ -71,7 +72,7 @@ else
             <div class="grid gap-4 md:grid-cols-2">
                 @if (Inv.Limitations.Count > 0)
                 {
-                    <Card Title="Limitations">
+                    <Card Title="Limitations" Icon="limits">
                         <ul class="list-disc space-y-1 pl-5 text-sm text-slate-700">
                             @foreach (var l in Inv.Limitations)
                             {
@@ -82,7 +83,7 @@ else
                 }
                 @if (Inv.ValidationIssues.Count > 0)
                 {
-                    <Card Title="Validation notes">
+                    <Card Title="Validation notes" Icon="notes">
                         <ul class="list-disc space-y-1 pl-5 text-sm text-slate-600">
                             @foreach (var l in Inv.ValidationIssues)
                             {

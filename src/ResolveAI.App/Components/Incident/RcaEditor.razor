@@ -1,10 +1,10 @@
 @inject AppService Service
 @inject IJSRuntime JS
 
-<div class="space-y-4 rounded-lg border border-slate-200 bg-white p-4" data-testid="rca-editor">
+<div class="space-y-4 rounded-lg border border-slate-200 bg-surface p-4" data-testid="rca-editor">
     <div class="flex flex-wrap items-center gap-2">
         <AiBadge>@(Rca.LlmMode == "live" ? "AI-generated draft" : "Recorded draft") — review required</AiBadge>
-        <span class="@Ui.Cx("rounded px-1.5 py-0.5 text-xs font-medium", Rca.Status == "reviewed" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700")">@Rca.Status</span>
+        <span class="@Ui.Cx("rounded-sm px-1.5 py-0.5 text-xs font-medium", Rca.Status == "reviewed" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700")">@Rca.Status</span>
         <span class="text-xs text-slate-500">
             v@(Rca.Version) · generated @Ui.FormatTime(Rca.GeneratedAt, true) · edited @Ui.FormatTime(Rca.UpdatedAt, true)
         </span>
@@ -24,11 +24,11 @@
             @foreach (var e in Rca.Timeline)
             {
                 <li class="flex flex-wrap gap-2">
-                    <span class="font-mono text-xs leading-5 text-slate-500">@Ui.FormatTime(e.Timestamp)</span>
+                    <span class="tabular-nums text-xs leading-5 text-slate-500">@Ui.FormatTime(e.Timestamp)</span>
                     <span class="flex-1">@e.Event</span>
                     @foreach (var reference in e.EvidenceIds)
                     {
-                        <button type="button" @onclick="() => OnEvidence.InvokeAsync(reference)" class="rounded bg-slate-100 px-1.5 text-xs text-slate-600 hover:bg-indigo-100 hover:text-indigo-800" title="@reference">source</button>
+                        <button type="button" @onclick="() => OnEvidence.InvokeAsync(reference)" class="rounded-sm bg-slate-100 px-1.5 text-xs text-slate-600 hover:bg-indigo-100 hover:text-indigo-800" title="@reference">source</button>
                     }
                 </li>
             }
@@ -36,7 +36,7 @@
     </div>
 
     <label class="block text-sm font-medium text-slate-700">Root cause
-        <textarea @bind="_rootCause" @bind:event="oninput" rows="3" class="@Field" data-testid="rca-root-cause"></textarea>
+        <textarea @bind="_rootCause" @bind:event="oninput" rows="5" class="@Field" data-testid="rca-root-cause"></textarea>
     </label>
     <div class="grid gap-4 md:grid-cols-3">
         <label class="block text-sm font-medium text-slate-700">Contributing factors <span class="font-normal text-slate-500">(one per line)</span>
@@ -58,7 +58,7 @@
         }
         <Btn OnClick="Copy" Disabled="@Dirty">@(_copied ? "Copied" : "Copy Markdown")</Btn>
         <a href="/api/rca-drafts/@Rca.Id/export.md" download
-           class="@Ui.Cx("rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50", Dirty ? "pointer-events-none opacity-50" : null)">
+           class="@Ui.Cx("rounded-md border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50", Dirty ? "pointer-events-none opacity-50" : null)">
             Download .md
         </a>
         @if (Dirty)

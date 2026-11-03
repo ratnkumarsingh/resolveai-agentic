@@ -10,8 +10,8 @@ else
         {
             var minutes = (long)Js.Round((start - Js.ParseDate(d.DeployedAt)).TotalMinutes);
             var sameService = d.ServiceName == Evidence.Incident.ServiceName;
-            <div @key="d.Id" id="@Ui.RowId(d.Ref)" class="@Ui.Cx("flex flex-wrap items-start gap-3 rounded-lg border border-slate-200 bg-white p-3", Focus == d.Ref ? "flash" : null)">
-                <span class="@Ui.Cx("rounded px-1.5 py-0.5 font-mono text-xs", sameService ? "bg-indigo-100 text-indigo-800" : "bg-slate-100 text-slate-600")">
+            <div @key="d.Id" id="@Ui.RowId(d.Ref)" class="@Ui.Cx("flex flex-wrap items-start gap-3 rounded-lg border border-slate-200 bg-surface p-3", Focus == d.Ref ? "flash" : null)">
+                <span class="@Ui.Cx("rounded-sm px-1.5 py-0.5 tabular-nums text-xs", sameService ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-600")">
                     @d.ServiceName @d.Version
                 </span>
                 <div class="min-w-0 flex-1">
@@ -20,7 +20,7 @@ else
                         @Ui.FormatTime(d.DeployedAt, true) · @d.Environment
                         @if (!string.IsNullOrEmpty(d.CommitRef))
                         {
-                            <text> · commit <span class="font-mono">@d.CommitRef</span></text>
+                            <text> · commit <span class="tabular-nums">@d.CommitRef</span></text>
                         }
                     </div>
                 </div>

@@ -4,10 +4,10 @@
 
 <PageTitle>ResolveAI</PageTitle>
 
-<div class="max-w-2xl space-y-4">
+<div class="page-enter max-w-2xl space-y-4">
     <h1 class="text-xl font-semibold">Settings &amp; demo data</h1>
 
-    <Card Title="Data source">
+    <Card Title="Data source" Icon="source">
         <dl class="grid grid-cols-[10rem_1fr] gap-y-2 text-sm">
             <dt class="text-slate-500">Mode</dt>
             <dd class="font-medium">Demo dataset</dd>
@@ -17,7 +17,7 @@
             <dd>
                 @if (_config.LlmMode == "live")
                 {
-                    <text>Live — investigations call Claude (<span class="font-mono">@_config.Model</span>) from the server.</text>
+                    <text>Live — investigations call Claude (<span class="tabular-nums">@_config.Model</span>) from the server.</text>
                 }
                 else
                 {
@@ -28,7 +28,7 @@
             <dd>
                 @if (_config.LiveAvailable)
                 {
-                    <text>Available on request (<span class="font-mono">@_config.LiveModel</span>) · @_config.LiveRunsToday of @_config.LiveDailyLimit model calls used today (UTC).</text>
+                    <text>Available on request (<span class="tabular-nums">@_config.LiveModel</span>) · @_config.LiveRunsToday of @_config.LiveDailyLimit model calls used today (UTC).</text>
                 }
                 else
                 {
@@ -38,7 +38,7 @@
         </dl>
     </Card>
 
-    <Card Title="Access code">
+    <Card Title="Access code" Icon="key">
         <p class="text-sm text-slate-600">
             Live Claude runs cost money, so they need the access code set on the server (<span class="font-mono">LIVE_ACCESS_CODE</span>).
             It also allows demo reset from outside localhost. The code is kept only in this browser.
@@ -55,7 +55,7 @@
         </form>
     </Card>
 
-    <Card Title="Reset demo data">
+    <Card Title="Reset demo data" Icon="reset">
         <p class="text-sm text-slate-600">
             Deletes all investigations, feedback and RCA drafts and restores the seeded incidents, so the demo can be run again from a known state.
         </p>
@@ -66,7 +66,7 @@
             }
             else
             {
-                <Btn Variant="primary" Class="bg-red-600 hover:bg-red-700" OnClick="Reset">Yes, reset everything</Btn>
+                <Btn Variant="danger" OnClick="Reset">Yes, reset everything</Btn>
                 <Btn Variant="ghost" OnClick="() => _confirming = false">Cancel</Btn>
             }
             @if (_resetDone && !_confirming)

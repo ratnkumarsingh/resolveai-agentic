@@ -1,8 +1,12 @@
-<section class="@Ui.Cx("rounded-lg border border-slate-200 bg-white", Class)">
+<section class="@Ui.Cx("rounded-lg border border-slate-200 bg-surface shadow-sm", Class)">
     @if (Title is not null || TitleContent is not null)
     {
-        <header class="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
-            <h3 class="text-sm font-semibold text-slate-700">@Title@TitleContent</h3>
+        <header class="flex items-center gap-2.5 border-b border-slate-100 px-4 py-2.5">
+            @if (Icon is not null)
+            {
+                <SectionTile Kind="@Icon" />
+            }
+            <h3 class="text-sm font-semibold text-slate-900">@Title@TitleContent</h3>
         </header>
     }
     <div class="p-4">@ChildContent</div>
@@ -10,6 +14,8 @@
 
 @code {
     [Parameter] public string? Title { get; set; }
+    /// <summary>A <see cref="SectionTile"/> kind for the heading.</summary>
+    [Parameter] public string? Icon { get; set; }
     [Parameter] public RenderFragment? TitleContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }

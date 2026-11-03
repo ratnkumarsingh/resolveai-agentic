@@ -9,7 +9,7 @@
 @if (_loadError is not null)
 {
     <div class="space-y-3">
-        <a href="/" class="text-sm text-indigo-600">← Incidents</a>
+        <a href="/" class="link text-sm">← Incidents</a>
         <ErrorBox Message="@_loadError" OnRetry="LoadAll" />
     </div>
 }
@@ -17,17 +17,17 @@ else if (_detail is not null)
 {
     var incident = _detail.Incident;
     var runs = _detail.Investigations;
-    <div class="space-y-5">
-        <a href="/" class="text-sm text-indigo-600 hover:underline">← Incident queue</a>
+    <div class="page-enter space-y-5">
+        <a href="/" class="link text-sm">← Incident queue</a>
 
-        <header class="@Ui.Cx("rounded-lg border border-slate-200 bg-white", Collapsed ? "px-5 py-3" : "p-5")">
+        <header class="@Ui.Cx("rounded-lg border border-slate-200 bg-surface", Collapsed ? "px-5 py-3" : "p-5")">
             <div class="flex flex-wrap items-start gap-4">
                 <div class="min-w-0 flex-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="font-mono text-sm text-slate-500">@incident.Key</span>
+                        <span class="tabular-nums text-sm text-slate-500">@incident.Key</span>
                         <SeverityChip Severity="@incident.Severity" />
                         <StatusChip Status="@incident.Status" />
-                        <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">@incident.ServiceName</span>
+                        <span class="@Ui.Cx("rounded-sm px-1.5 py-0.5 text-xs font-medium", Ui.ServiceChip(incident.ServiceName))">@incident.ServiceName</span>
                         <span class="text-xs text-slate-500">@incident.Environment</span>
                     </div>
                     <h1 class="@Ui.Cx("mt-1.5 font-semibold", Collapsed ? "text-lg" : "text-2xl")">@incident.Title</h1>
@@ -60,13 +60,13 @@ else if (_detail is not null)
                                     Use live Claude (@_config.LiveModel) · @Math.Max(0, _config.LiveDailyLimit - _config.LiveRunsToday) of @_config.LiveDailyLimit left today
                                     @if (_live && Codes.Current.Length == 0 && _config.LlmMode != "live")
                                     {
-                                        <span class="block text-amber-700">Needs the access code — <a href="/settings" class="underline">enter it in Settings</a>.</span>
+                                        <span class="block text-amber-700">Needs the access code — <a href="/settings" class="link link-inline">enter it in Settings</a>.</span>
                                     }
                                 </span>
                             </label>
                         }
                     }
-                    <Btn Type="submit" Variant="primary" Class="w-full" Disabled="@Running" data-testid="run-investigation">
+                    <Btn Type="submit" Variant="@(_inv is null ? "primary" : "secondary")" Class="w-full" Disabled="@Running" data-testid="run-investigation">
                         @if (Running)
                         {
                             <Spinner Class="h-3.5 w-3.5" />
@@ -80,7 +80,7 @@ else if (_detail is not null)
                     @if (HasRun)
                     {
                         <button type="button" @onclick="() => _detailsOpen = !_detailsOpen" aria-expanded="@Ui.Aria(_detailsOpen)" data-testid="incident-details-toggle"
-                                class="w-full text-center text-xs font-medium text-indigo-700 hover:underline">
+                                class="link w-full text-center text-xs font-medium">
                             @(_detailsOpen ? "Hide details" : "Details, question and earlier runs")
                         </button>
                     }
@@ -109,7 +109,7 @@ else if (_detail is not null)
             @foreach (var (key, label) in Tabs)
             {
                 <button type="button" role="tab" aria-selected="@Ui.Aria(_tab == key)" @onclick="() => SetTab(key)"
-                        class="@Ui.Cx("-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm", _tab == key ? "tab-active font-semibold text-violet-800" : "border-transparent text-slate-600 hover:text-violet-800")">
+                        class="@Ui.Cx("-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm transition-colors", _tab == key ? "tab-active font-medium text-indigo-700" : "border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900")">
                     @label
                     @if (key == "findings" && Running)
                     {
@@ -121,7 +121,7 @@ else if (_detail is not null)
                     }
                     @if (key == "systems" && _inv is { ToolCalls.Count: > 0 })
                     {
-                        <span class="ml-1 rounded-full bg-gradient-to-r from-sky-500 to-violet-500 px-1.5 text-[11px] font-semibold text-white">@_inv.ToolCalls.Count</span>
+                        <span class="ml-1 rounded-full bg-indigo-600 px-1.5 text-[11px] font-medium text-on-accent">@_inv.ToolCalls.Count</span>
                     }
                     @if (key == "rca" && _detail.RcaDrafts.Count > 0)
                     {
@@ -131,7 +131,7 @@ else if (_detail is not null)
             }
         </nav>
 
-        <div @key="_tab">
+        <div @key="_tab" class="tab-panel">
             @switch (_tab)
             {
                 case "overview" when _evidence is not null:
