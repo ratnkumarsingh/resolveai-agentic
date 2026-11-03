@@ -58,7 +58,7 @@
         }
         <Btn OnClick="Copy" Disabled="@Dirty">@(_copied ? "Copied" : "Copy Markdown")</Btn>
         <a href="/api/rca-drafts/@Rca.Id/export.md" download
-           class="@Ui.Cx("rounded-md border border-slate-300 bg-surface px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50", Dirty ? "pointer-events-none opacity-50" : null)">
+           class="@Ui.Cx("btn-secondary rounded-md px-3 py-1.5 text-sm font-medium", Dirty ? "pointer-events-none opacity-50" : null)">
             Download .md
         </a>
         @if (Dirty)
