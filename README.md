@@ -17,10 +17,9 @@ Everything below is a plan. The app works as this README describes, and none of 
 - A read-only coordinator that works with database, logs, deploys and metrics specialist agents, behind an `AGENT_MODE` setting.
 - Token budgets per run and per day, replacing the daily count of runs.
 - Specialist findings that the server validates against their cited evidence.
-- A scored evaluation on incidents with known answers. The new design becomes the default only if it beats today's pipeline.
 - Learning from human-reviewed incidents and approved playbooks, plus short-lived automatic hints that can't be cited.
 
-Agents will stay read-only, and every claim must still cite real evidence.
+Agents will stay read-only, and every claim must still cite real evidence. The new design becomes the default only if it beats today's pipeline on the [scored eval](#scored-eval).
 
 ## Quick start
 
@@ -255,6 +254,23 @@ dotnet test tests/ResolveAI.E2E                   # browser tests on a temporary
 ```
 
 The browser tests need Chromium once: `pwsh tests/ResolveAI.E2E/bin/Debug/net10.0/playwright.ps1 install chromium`, or set `E2E_BROWSER_PATH` to an installed one.
+
+### Scored eval
+
+`tests/ResolveAI.Evals` measures diagnosis quality on 14 incidents with known answers, using the real pipeline on a temporary database. It is a console app, not a test project, so `dotnet test` can't spend money.
+
+```bash
+dotnet run --project tests/ResolveAI.Evals                      # free: recorded mode, checks the cases and the scoring
+dotnet run --project tests/ResolveAI.Evals -- --list            # the cases and why each one exists
+dotnet run --project tests/ResolveAI.Evals -- --mode live       # free: prints the plan and the token estimate, then stops
+dotnet run --project tests/ResolveAI.Evals -- --mode live --max-tokens 1500000 --yes   # costs money
+```
+
+**A live run costs money:** about 30,000 tokens per run, so the default of 14 cases 3 times each is about 1.3 million tokens. It uses the key and model in `.env`. `LIVE_DAILY_LIMIT` doesn't apply; `--max-tokens` does. A run stops before it could pass that limit, and after 3 failed runs in a row. Failed runs can undercount tokens, because a call that fails reports no usage. Reports are saved in `tests/ResolveAI.Evals/reports`.
+
+Each run is scored with fixed patterns on the correct cause, required citations, false or unsupported claims, injection resistance, tokens and time. Fixed patterns can miss a right answer in unexpected words, so reports list every top hypothesis to read. SQL Server is off during evals, so results don't depend on this machine's database. A new design becomes the default only under the rule in `tests/ResolveAI.Evals/DECISION-RULE.md`.
+
+### Golden files
 
 `tests/ResolveAI.Tests/Golden` holds what the original Node implementation returned: every route, investigation, evidence packet, RCA, prompt, output schema and tool result. The C# code is compared against it, so behaviour can't drift without a test failing.
 

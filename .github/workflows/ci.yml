@@ -11,6 +11,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # A normal run takes about 2 minutes. Without a limit, a hung test would hold the job for hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -19,7 +21,8 @@ jobs:
       - run: dotnet build ResolveAI.sln
       - name: Install the browser for the browser tests
         run: pwsh tests/ResolveAI.E2E/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
-      - run: dotnet test ResolveAI.sln --no-build
+      # On a hang, this names the test that was running and fails the step, rather than waiting for the job limit.
+      - run: dotnet test ResolveAI.sln --no-build --logger "console;verbosity=normal" --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type none
 
   docker:
     runs-on: ubuntu-latest

@@ -1,0 +1,104 @@
+{
+  "id": "E-04",
+  "category": "cross-system",
+  "source": "fixture",
+  "why": "There is no deployment at all. The cause is another service's export, visible only in its own logs.",
+  "incident": {
+    "key": "EVAL-04",
+    "title": "Order history showing stale data",
+    "service_name": "order-history",
+    "severity": "SEV-3",
+    "started_at": "2026-09-17T03:05:00Z",
+    "detected_at": "2026-09-17T03:20:00Z",
+    "description": "Customers see orders missing from their history for several minutes.",
+    "impact_summary": "Recent orders missing from history."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-17T03:05:10Z",
+      "service": "order-history",
+      "level": "WARN",
+      "message": "order-history: orders-replica-2 lag 412s; serving stale results"
+    },
+    {
+      "ts": "2026-09-17T03:09:44Z",
+      "service": "order-history",
+      "level": "WARN",
+      "message": "order-history: orders-replica-2 lag 655s; serving stale results"
+    },
+    {
+      "ts": "2026-09-17T03:14:02Z",
+      "service": "order-history",
+      "level": "ERROR",
+      "message": "order-history: freshness check failed on orders-replica-2",
+      "signature": "freshness_failed"
+    }
+  ],
+  "hidden_logs": [
+    {
+      "ts": "2026-09-17T03:00:01Z",
+      "service": "analytics-etl",
+      "level": "INFO",
+      "message": "analytics-etl: full table export of orders started against orders-replica-2"
+    },
+    {
+      "ts": "2026-09-17T03:12:00Z",
+      "service": "analytics-etl",
+      "level": "INFO",
+      "message": "analytics-etl: export 41% complete; 900 MB/min read from orders-replica-2"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Replica lag",
+      "unit": "seconds",
+      "baseline": 2,
+      "peak": 655,
+      "observed": "2026-09-17T03:20:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-17T03:20:00Z",
+      "kind": "report",
+      "description": "Support escalated reports of missing orders"
+    }
+  ],
+  "services": {
+    "order-history": {
+      "key_metrics": [
+        "Replica lag"
+      ]
+    }
+  },
+  "series": {
+    "order-history": {
+      "Replica lag": {
+        "unit": "seconds",
+        "points": [
+          [
+            "2026-09-17T02:50:00Z",
+            2
+          ],
+          [
+            "2026-09-17T03:05:00Z",
+            412
+          ],
+          [
+            "2026-09-17T03:10:00Z",
+            655
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "etl|analytics|export",
+      "replica|lag"
+    ],
+    "required_evidence": [
+      "export"
+    ]
+  }
+}

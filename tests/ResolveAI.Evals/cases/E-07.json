@@ -1,0 +1,149 @@
+{
+  "id": "E-07",
+  "category": "misleading",
+  "source": "fixture",
+  "why": "The obvious suspect is a docs-only release. The real cause is a migration in another service.",
+  "incident": {
+    "key": "EVAL-07",
+    "title": "Invoice API hanging",
+    "service_name": "billing-api",
+    "severity": "SEV-1",
+    "started_at": "2026-09-21T22:01:00Z",
+    "detected_at": "2026-09-21T22:04:00Z",
+    "description": "Invoice requests hang and then fail, right after a billing-api release.",
+    "impact_summary": "Invoices can't be created."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-21T21:55:00Z",
+      "service": "billing-api",
+      "level": "INFO",
+      "message": "deploy-agent: billing-api v5.0.3 rollout finished"
+    },
+    {
+      "ts": "2026-09-21T22:01:00Z",
+      "service": "billing-api",
+      "level": "ERROR",
+      "message": "billing-api: lock wait timeout on table invoices",
+      "signature": "lock_wait_timeout"
+    },
+    {
+      "ts": "2026-09-21T22:02:15Z",
+      "service": "billing-api",
+      "level": "ERROR",
+      "message": "billing-api: lock wait timeout on table invoices",
+      "signature": "lock_wait_timeout"
+    }
+  ],
+  "hidden_logs": [
+    {
+      "ts": "2026-09-21T22:00:02Z",
+      "service": "ledger-migrator",
+      "level": "INFO",
+      "message": "ledger-migrator: ALTER TABLE invoices ADD COLUMN ledger_ref started; holding exclusive lock"
+    },
+    {
+      "ts": "2026-09-21T22:06:00Z",
+      "service": "ledger-migrator",
+      "level": "INFO",
+      "message": "ledger-migrator: migration 41% complete"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Invoice failures",
+      "unit": "per min",
+      "baseline": 0,
+      "peak": 240,
+      "observed": "2026-09-21T22:10:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-21T21:55:00Z",
+      "kind": "deployment",
+      "description": "billing-api v5.0.3 released"
+    },
+    {
+      "ts": "2026-09-21T22:04:00Z",
+      "kind": "alert",
+      "description": "Alert fired: invoice failures"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "billing-api",
+      "version": "v5.0.3",
+      "deployed_at": "2026-09-21T21:55:00Z",
+      "change_summary": "Fix typo in API docs",
+      "commit": "ff77aa8",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "docs/api.md",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "-recieve\n+receive\n",
+      "in_db": true
+    },
+    {
+      "service": "ledger-migrator",
+      "version": "v1.2.0",
+      "deployed_at": "2026-09-21T21:59:00Z",
+      "change_summary": "Add ledger_ref to invoices",
+      "commit": "ab88cd9",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "migrations/042.sql",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "+ALTER TABLE invoices ADD COLUMN ledger_ref TEXT;\n",
+      "in_db": false
+    }
+  ],
+  "services": {
+    "billing-api": {
+      "key_metrics": [
+        "Invoice failures"
+      ]
+    }
+  },
+  "series": {
+    "billing-api": {
+      "Invoice failures": {
+        "unit": "per min",
+        "points": [
+          [
+            "2026-09-21T21:50:00Z",
+            0
+          ],
+          [
+            "2026-09-21T22:00:00Z",
+            0
+          ],
+          [
+            "2026-09-21T22:02:00Z",
+            240
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "migrat|alter table|schema",
+      "lock|invoices"
+    ],
+    "required_evidence": [
+      "alter table|migrat"
+    ],
+    "forbidden_top_title": [
+      "v5\\.0\\.3|typo|docs"
+    ]
+  }
+}

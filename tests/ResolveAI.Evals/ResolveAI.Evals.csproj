@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- A console app on purpose, not a test project: "dotnet test" must never be able to spend money. -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="cases/*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ResolveAI.App\ResolveAI.App.csproj" />
+    <ProjectReference Include="..\..\src\ResolveAI.Mcp\ResolveAI.Mcp.csproj" />
+    <ProjectReference Include="..\..\src\ResolveAI.Contracts\ResolveAI.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

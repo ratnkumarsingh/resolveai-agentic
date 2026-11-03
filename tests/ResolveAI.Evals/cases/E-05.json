@@ -1,0 +1,115 @@
+{
+  "id": "E-05",
+  "category": "single-system",
+  "source": "fixture",
+  "why": "No release is involved. A config file shows a hand edit pointing at a host that was retired.",
+  "incident": {
+    "key": "EVAL-05",
+    "title": "Product images failing to load",
+    "service_name": "image-proxy",
+    "severity": "SEV-2",
+    "started_at": "2026-09-18T14:00:30Z",
+    "detected_at": "2026-09-18T14:04:00Z",
+    "description": "Product images return errors across the site.",
+    "impact_summary": "Most product images are missing."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-18T14:00:30Z",
+      "service": "image-proxy",
+      "level": "ERROR",
+      "message": "image-proxy: 502 from upstream cdn-eu-old.internal: no such host",
+      "signature": "upstream_502"
+    },
+    {
+      "ts": "2026-09-18T14:01:12Z",
+      "service": "image-proxy",
+      "level": "ERROR",
+      "message": "image-proxy: 502 from upstream cdn-eu-old.internal: no such host",
+      "signature": "upstream_502"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Image error rate",
+      "unit": "%",
+      "baseline": 0.1,
+      "peak": 87,
+      "observed": "2026-09-18T14:10:00Z"
+    },
+    {
+      "name": "Requests",
+      "unit": "per min",
+      "baseline": 8200,
+      "peak": 8300,
+      "observed": "2026-09-18T14:10:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-18T14:04:00Z",
+      "kind": "alert",
+      "description": "Alert fired: image error rate above 10%"
+    }
+  ],
+  "deploys": [
+    {
+      "service": "image-proxy",
+      "version": "v1.9.0",
+      "deployed_at": "2026-09-10T11:00:00Z",
+      "change_summary": "Add WebP support",
+      "commit": "bb55cc6",
+      "author": "dev",
+      "files_changed": [
+        {
+          "path": "src/format.ts",
+          "added": 1,
+          "removed": 1
+        }
+      ],
+      "patch": "+  webp: true,\n",
+      "in_db": false
+    }
+  ],
+  "files": {
+    "image-proxy/upstream.conf": "# Edited by ops at 2026-09-18T13:58:00Z, outside a release\nupstream=cdn-eu-old.internal\n",
+    "image-proxy/hosts-retired.txt": "cdn-eu-old.internal retired 2026-09-01 (replaced by cdn-eu.internal)\n"
+  },
+  "services": {
+    "image-proxy": {
+      "key_metrics": [
+        "Image error rate"
+      ]
+    }
+  },
+  "series": {
+    "image-proxy": {
+      "Image error rate": {
+        "unit": "%",
+        "points": [
+          [
+            "2026-09-18T13:50:00Z",
+            0.1
+          ],
+          [
+            "2026-09-18T14:00:00Z",
+            0.1
+          ],
+          [
+            "2026-09-18T14:02:00Z",
+            87
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "cause_all": [
+      "cdn-eu-old|upstream",
+      "config|retired|decommission|no such host|edit"
+    ],
+    "required_evidence": [
+      "cdn-eu-old"
+    ]
+  }
+}

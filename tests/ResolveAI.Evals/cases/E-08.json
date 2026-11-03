@@ -1,0 +1,79 @@
+{
+  "id": "E-08",
+  "category": "insufficient",
+  "source": "fixture",
+  "why": "Two transient errors and flat metrics: a confident cause here would be invented.",
+  "incident": {
+    "key": "EVAL-08",
+    "title": "Occasional feed errors",
+    "service_name": "feed-api",
+    "severity": "SEV-4",
+    "started_at": "2026-09-22T11:30:00Z",
+    "detected_at": "2026-09-22T12:00:00Z",
+    "description": "Two customers reported a brief error loading their feed.",
+    "impact_summary": "Unclear; no measurable change."
+  },
+  "logs": [
+    {
+      "ts": "2026-09-22T11:30:00Z",
+      "service": "feed-api",
+      "level": "ERROR",
+      "message": "feed-api: request failed with HTTP 503; request_id=f-9",
+      "signature": "http_503"
+    },
+    {
+      "ts": "2026-09-22T11:47:00Z",
+      "service": "feed-api",
+      "level": "ERROR",
+      "message": "feed-api: request failed with HTTP 503; request_id=f-44",
+      "signature": "http_503"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "Error rate",
+      "unit": "%",
+      "baseline": 0.02,
+      "peak": 0.03,
+      "observed": "2026-09-22T12:00:00Z"
+    }
+  ],
+  "timeline": [
+    {
+      "ts": "2026-09-22T12:00:00Z",
+      "kind": "report",
+      "description": "Support logged two customer reports"
+    }
+  ],
+  "services": {
+    "feed-api": {
+      "key_metrics": [
+        "Error rate"
+      ]
+    }
+  },
+  "series": {
+    "feed-api": {
+      "Error rate": {
+        "unit": "%",
+        "points": [
+          [
+            "2026-09-22T11:00:00Z",
+            0.02
+          ],
+          [
+            "2026-09-22T11:30:00Z",
+            0.03
+          ],
+          [
+            "2026-09-22T12:00:00Z",
+            0.02
+          ]
+        ]
+      }
+    }
+  },
+  "expected": {
+    "kind": "insufficient"
+  }
+}
