@@ -1,20 +1,20 @@
 @inject AppService Service
 
-<article class="rounded-lg border border-slate-200 bg-white" data-testid="hypothesis">
+<article class="rounded-lg border border-slate-200 bg-surface" data-testid="hypothesis">
     <header class="flex flex-wrap items-start gap-2 border-b border-slate-100 px-4 py-3">
-        <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-900 text-xs font-semibold text-white">@H.Rank</span>
+        <span class="grid h-6 w-6 shrink-0 place-items-center tile-violet gloss rounded-full text-xs font-medium text-white">@H.Rank</span>
         <h4 class="min-w-0 flex-1 font-semibold">@H.Title</h4>
         <ConfidenceChip Confidence="@H.Confidence" />
         @if (H.Speculative)
         {
-            <span class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">speculative</span>
+            <span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">speculative</span>
         }
     </header>
     <div class="space-y-4 p-4">
         <p class="text-sm text-slate-700">@H.Explanation</p>
 
         <div>
-            <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Supporting evidence</h5>
+            <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700">Supporting evidence</h5>
             @if (H.Evidence.Count == 0)
             {
                 <p class="text-sm text-amber-800">No supporting records in the evidence packet.</p>
@@ -30,10 +30,10 @@
                                 <EvidenceChip Kind="@e.Kind" Label="@e.Label" />
                                 @if (!string.IsNullOrEmpty(e.Timestamp))
                                 {
-                                    <span class="shrink-0 font-mono text-xs leading-5 text-slate-500">@Ui.FormatTime(e.Timestamp, e.Kind == "hist").Replace(" UTC", "")</span>
+                                    <span class="shrink-0 tabular-nums text-xs leading-5 text-slate-500">@Ui.FormatTime(e.Timestamp, e.Kind == "hist").Replace(" UTC", "")</span>
                                 }
                                 @* A system check cites its one-line summary here; the rows are in the System checks tab. *@
-                                <span class="min-w-0 break-words text-slate-700 group-hover:text-indigo-700 group-hover:underline">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
+                                <span class="min-w-0 break-words text-slate-700 underline decoration-slate-400 decoration-dotted underline-offset-4 transition-colors group-hover:text-indigo-700 group-hover:decoration-solid">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
                             </button>
                         </li>
                     }
@@ -47,7 +47,7 @@
                 @if (H.CounterEvidence.Count > 0)
                 {
                     <div>
-                        <h5 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Counter-evidence</h5>
+                        <h5 class="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">Counter-evidence</h5>
                         <ul class="list-disc space-y-0.5 pl-5 text-sm text-slate-700">
                             @foreach (var c in H.CounterEvidence)
                             {
@@ -59,7 +59,7 @@
                 @if (H.Unknowns.Count > 0)
                 {
                     <div>
-                        <h5 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Unknowns</h5>
+                        <h5 class="mb-1 text-xs font-semibold uppercase tracking-wide text-violet-700">Unknowns</h5>
                         <ul class="list-disc space-y-0.5 pl-5 text-sm text-slate-700">
                             @foreach (var c in H.Unknowns)
                             {
@@ -74,7 +74,7 @@
         @if (H.RecommendedChecks.Count > 0)
         {
             <div>
-                <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Recommended checks <span class="font-normal normal-case">(for an engineer to perform — nothing is executed)</span></h5>
+                <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Recommended checks <span class="font-normal normal-case">(for an engineer to perform — nothing is executed)</span></h5>
                 <div class="overflow-x-auto rounded-md border border-slate-200">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-3 py-1.5">Check</th><th class="px-3 py-1.5">Why</th><th class="px-3 py-1.5">Expected signal</th></tr></thead>

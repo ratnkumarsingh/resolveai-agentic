@@ -1,10 +1,10 @@
 @inject IJSRuntime JS
 
 @* The first thing a finished run shows: the top hypothesis, what backs it, what to check, and what to do next. It stays labelled as unconfirmed. *@
-<section class="@Ui.Cx("overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm", H.Speculative ? "border-amber-300 from-amber-50 to-white" : "border-violet-200 from-violet-50 via-white to-indigo-50")" data-testid="leading-hypothesis">
+<section class="@Ui.Cx("overflow-hidden rounded-xl border border-l-4 bg-surface shadow-sm", H.Speculative ? "border-amber-300 border-l-amber-500" : "border-slate-200 border-l-indigo-500")" data-testid="leading-hypothesis">
     <div class="p-5">
         <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs font-semibold uppercase tracking-wide text-violet-800">Leading hypothesis</span>
+            <span class="text-xs font-semibold uppercase tracking-wide label-gradient">Leading hypothesis</span>
             <AiBadge>@(Inv.LlmMode == "live" ? $"AI-generated ({Inv.ModelName ?? "Claude"}) — not confirmed" : "Recorded analysis — not confirmed")</AiBadge>
             @if (!H.Speculative)
             {
@@ -24,15 +24,15 @@
             @if (H.Evidence.Count > 0)
             {
                 <div class="min-w-0">
-                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">What backs it</h3>
+                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-700">What backs it</h3>
                     <ul class="space-y-0.5">
                         @foreach (var e in H.Evidence.Take(3))
                         {
                             <li @key="e.Ref">
-                                <button type="button" @onclick="() => OnEvidence.InvokeAsync(e.Ref)" class="group flex w-full items-start gap-2 rounded-md p-1.5 text-left text-sm hover:bg-white"
+                                <button type="button" @onclick="() => OnEvidence.InvokeAsync(e.Ref)" class="group flex w-full items-start gap-2 rounded-md p-1.5 text-left text-sm hover:bg-surface"
                                         title="Show source record" data-testid="leading-evidence">
                                     <EvidenceChip Kind="@e.Kind" Label="@e.Label" />
-                                    <span class="min-w-0 line-clamp-2 break-words text-slate-700 group-hover:text-indigo-700 group-hover:underline">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
+                                    <span class="min-w-0 line-clamp-2 break-words text-slate-700 underline decoration-slate-400 decoration-dotted underline-offset-4 transition-colors group-hover:text-indigo-700 group-hover:decoration-solid">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
                                 </button>
                             </li>
                         }
@@ -45,8 +45,8 @@
             }
             @if (H.RecommendedChecks.FirstOrDefault() is { } check)
             {
-                <div class="min-w-0 rounded-lg border border-slate-200 bg-white p-3" data-testid="leading-check">
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Check this first</h3>
+                <div class="min-w-0 rounded-lg border border-slate-200 bg-surface p-3" data-testid="leading-check">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Check this first</h3>
                     <p class="mt-1 text-sm font-medium text-slate-900">@check.Step</p>
                     <p class="mt-1 text-xs text-slate-600"><strong class="font-medium">Expect:</strong> @check.ExpectedSignal</p>
                     <p class="mt-2 text-xs text-slate-500">For an engineer to perform — nothing is executed.</p>
@@ -54,7 +54,7 @@
             }
         </div>
     </div>
-    <div class="flex flex-wrap items-center gap-2 border-t border-slate-200/70 bg-white/60 px-5 py-3">
+    <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
         <Btn Variant="primary" OnClick="@(() => ScrollTo("verified-cause"))">Record what you found</Btn>
         <Btn OnClick="OnOpenRca">Draft RCA</Btn>
         <Btn Variant="ghost" OnClick="@(() => ScrollTo("hypothesis-list"))">See full reasoning</Btn>

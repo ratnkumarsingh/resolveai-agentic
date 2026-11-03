@@ -1,4 +1,4 @@
-<div class="overflow-x-auto rounded-md border border-slate-200 bg-white">
+<div class="overflow-x-auto rounded-md border border-slate-200 bg-surface">
     <table class="w-full text-left text-xs">
         <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
@@ -22,7 +22,7 @@
     </table>
     @if (Rows.Count > FirstRows)
     {
-        <button type="button" @onclick="() => _all = !_all" class="w-full border-t border-slate-100 py-1 text-xs font-medium text-indigo-700 hover:bg-slate-50">
+        <button type="button" @onclick="() => _all = !_all" class="w-full border-t border-slate-100 py-1 link text-xs font-medium hover:bg-slate-50">
             @(_all ? "Show fewer" : $"Show all {Rows.Count} rows")
         </button>
     }

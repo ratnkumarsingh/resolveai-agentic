@@ -1,5 +1,5 @@
 <button type="@Type" disabled="@Disabled" @onclick="OnClick" @attributes="Attributes"
-        class="@Ui.Cx("inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50", VariantClass, Class)">
+        class="@Ui.Cx("inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition active:scale-[0.98] motion-reduce:transform-none disabled:cursor-not-allowed disabled:active:scale-100 disabled:opacity-50", VariantClass, Class)">
     @ChildContent
 </button>
 
@@ -14,8 +14,9 @@
 
     private string VariantClass => Variant switch
     {
-        "primary" => "bg-indigo-600 text-white hover:bg-indigo-700",
+        "primary" => "btn-primary",
+        "danger" => "bg-red-600 text-white hover:opacity-90",
         "ghost" => "text-slate-600 hover:bg-slate-100",
-        _ => "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+        _ => "border border-slate-300 bg-surface text-slate-700 hover:bg-slate-50",
     };
 }

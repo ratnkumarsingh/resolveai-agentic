@@ -1,5 +1,10 @@
-<span class="@Ui.Cx("rounded px-1.5 py-0.5 text-xs font-semibold", Ui.Severity(Severity))">@Severity</span>
+<span class="@Ui.Cx("inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-medium", Ui.Severity(Severity))">@if (Live && Severity == "SEV-1")
+{
+    <span aria-hidden="true" class="live-dot"></span>
+}@Severity</span>
 
 @code {
     [Parameter, EditorRequired] public string Severity { get; set; } = "";
+    /// <summary>The incident is still active, so a SEV-1 shows a slow pulse. Nothing else on the page keeps moving.</summary>
+    [Parameter] public bool Live { get; set; }
 }

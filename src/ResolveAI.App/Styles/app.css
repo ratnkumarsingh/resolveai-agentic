@@ -2,46 +2,497 @@
 
 @source "../Components";
 
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+  --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, sans-serif;
+  --font-mono: "Cascadia Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* One radius per kind of element: chips, controls, cards. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+
+  /* Everything has a colour role, but blue stays reserved for clickable things, and red, amber and green keep their severity
+     and health meanings.
+
+     This theme is dark only, and surfaces are translucent so the page's colour glows show through. Components use Tailwind's
+     colour names, so the whole app takes its colours from here, and the scales run the opposite way to Tailwind's: 50-300 are
+     translucent tints, 400-600 are saturated fills, 700-900 are light text. */
+  --color-page: #090e1a;
+  --color-surface: rgb(24 30 39 / 0.8);
+  --color-raised: rgb(9 14 26 / 0.6);
+  --color-on-accent: #ffffff;
+
+  --color-slate-50: rgb(8 11 24 / 0.45);
+  --color-slate-100: rgb(255 255 255 / 0.07);
+  --color-slate-200: rgb(255 255 255 / 0.12);
+  --color-slate-300: rgb(255 255 255 / 0.2);
+  --color-slate-400: #9aa1ad;
+  --color-slate-500: #a4abb7;
+  --color-slate-600: #b5bbc6;
+  --color-slate-700: #cdd2db;
+  --color-slate-800: #dfe2e8;
+  --color-slate-900: #e8eaef;
+
+  /* "indigo" is the action colour: 600 is the primary fill, 700 links and 900 link hover. */
+  --color-indigo-50: rgb(59 130 246 / 0.1);
+  --color-indigo-100: rgb(59 130 246 / 0.18);
+  --color-indigo-200: rgb(59 130 246 / 0.3);
+  --color-indigo-300: rgb(59 130 246 / 0.45);
+  --color-indigo-400: #1f52c4;
+  --color-indigo-500: #7cb4ff;
+  --color-indigo-600: #2563eb;
+  --color-indigo-700: #7cb4ff;
+  --color-indigo-800: #93c5fd;
+  --color-indigo-900: #a8ccff;
+
+  --color-red-50: rgb(239 68 68 / 0.1);
+  --color-red-100: rgb(239 68 68 / 0.18);
+  --color-red-200: rgb(239 68 68 / 0.3);
+  --color-red-300: rgb(239 68 68 / 0.45);
+  --color-red-400: #f97066;
+  --color-red-500: #f04438;
+  --color-red-600: #d92d20;
+  --color-red-700: #fca5a5;
+  --color-red-800: #fecaca;
+  --color-red-900: #fee2e2;
+
+  --color-orange-50: rgb(249 115 22 / 0.1);
+  --color-orange-100: rgb(249 115 22 / 0.18);
+  --color-orange-200: rgb(249 115 22 / 0.3);
+  --color-orange-300: rgb(249 115 22 / 0.45);
+  --color-orange-400: #f38744;
+  --color-orange-500: #ef6820;
+  --color-orange-600: #c2410c;
+  --color-orange-700: #fdba74;
+  --color-orange-800: #fed7aa;
+  --color-orange-900: #ffedd5;
+
+  --color-amber-50: rgb(245 158 11 / 0.1);
+  --color-amber-100: rgb(245 158 11 / 0.18);
+  --color-amber-200: rgb(245 158 11 / 0.3);
+  --color-amber-300: rgb(245 158 11 / 0.45);
+  --color-amber-400: #fdb022;
+  --color-amber-500: #f79009;
+  --color-amber-600: #b54708;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+  --color-amber-900: #fef3c7;
+
+  --color-emerald-50: rgb(16 185 129 / 0.1);
+  --color-emerald-100: rgb(16 185 129 / 0.18);
+  --color-emerald-200: rgb(16 185 129 / 0.3);
+  --color-emerald-300: rgb(16 185 129 / 0.45);
+  --color-emerald-400: #32d583;
+  --color-emerald-500: #12b76a;
+  --color-emerald-600: #047857;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-emerald-900: #d1fae5;
+
+  --color-sky-50: rgb(14 165 233 / 0.1);
+  --color-sky-100: rgb(14 165 233 / 0.18);
+  --color-sky-200: rgb(14 165 233 / 0.3);
+  --color-sky-300: rgb(14 165 233 / 0.45);
+  --color-sky-400: #7cd4fd;
+  --color-sky-500: #36bffa;
+  --color-sky-600: #0b76b7;
+  --color-sky-700: #7dd3fc;
+  --color-sky-800: #bae6fd;
+  --color-sky-900: #e0f2fe;
+
+  --color-violet-50: rgb(139 92 246 / 0.1);
+  --color-violet-100: rgb(139 92 246 / 0.18);
+  --color-violet-200: rgb(139 92 246 / 0.3);
+  --color-violet-300: rgb(139 92 246 / 0.45);
+  --color-violet-400: #bdb4fe;
+  --color-violet-500: #9b8afb;
+  --color-violet-600: #6d28d9;
+  --color-violet-700: #c4b5fd;
+  --color-violet-800: #ddd6fe;
+  --color-violet-900: #ede9fe;
+
+  --color-teal-50: rgb(20 184 166 / 0.1);
+  --color-teal-100: rgb(20 184 166 / 0.18);
+  --color-teal-200: rgb(20 184 166 / 0.3);
+  --color-teal-300: rgb(20 184 166 / 0.45);
+  --color-teal-400: #5eead4;
+  --color-teal-500: #2dd4bf;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #5eead4;
+  --color-teal-800: #99f6e4;
+  --color-teal-900: #ccfbf1;
+
+  --color-cyan-50: rgb(6 182 212 / 0.1);
+  --color-cyan-100: rgb(6 182 212 / 0.18);
+  --color-cyan-200: rgb(6 182 212 / 0.3);
+  --color-cyan-300: rgb(6 182 212 / 0.45);
+  --color-cyan-400: #67e8f9;
+  --color-cyan-500: #22d3ee;
+  --color-cyan-600: #0e7490;
+  --color-cyan-700: #67e8f9;
+  --color-cyan-800: #a5f3fc;
+  --color-cyan-900: #cffafe;
+
+  --color-pink-50: rgb(236 72 153 / 0.1);
+  --color-pink-100: rgb(236 72 153 / 0.18);
+  --color-pink-200: rgb(236 72 153 / 0.3);
+  --color-pink-300: rgb(236 72 153 / 0.45);
+  --color-pink-400: #f9a8d4;
+  --color-pink-500: #f472b6;
+  --color-pink-600: #be185d;
+  --color-pink-700: #f9a8d4;
+  --color-pink-800: #fbcfe8;
+  --color-pink-900: #fce7f3;
+
+  /* Black shadows vanish on a dark page, so depth comes from a bright top highlight and, on hover, a soft blue glow. */
+  --shadow-sm: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  --shadow-md: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 0 0 1px rgb(124 180 255 / 0.25), 0 8px 28px rgb(124 180 255 / 0.12);
+  --shadow-lg: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 0 0 1px rgb(124 180 255 / 0.32), 0 12px 36px rgb(124 180 255 / 0.16);
 }
 
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-page);
+    accent-color: var(--color-indigo-600);
+  }
+
+  body {
+    @apply text-slate-900 antialiased;
+  }
+
+  input:not([type="checkbox"], [type="radio"]), select, textarea {
+    background-color: var(--color-raised);
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  ::placeholder {
+    color: var(--color-slate-400);
+    opacity: 1;
+  }
+
+  a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--color-indigo-500);
+    outline-offset: 1px;
+  }
+}
+
+/* The page: colour glows for the glass to pick up, then a spotlight from the top and a faint grid that fades out with it. Fixed
+   and static, so they cost nothing while the page sits open. They fade in once. */
+body::before, body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  animation: fade 900ms ease-out backwards;
+}
+
+body::before {
   background-image:
-    radial-gradient(60rem 30rem at 100% 0, rgb(217 70 239 / 0.1), transparent),
-    radial-gradient(50rem 30rem at 0 20rem, rgb(14 165 233 / 0.1), transparent),
-    radial-gradient(50rem 30rem at 60% 100%, rgb(245 158 11 / 0.08), transparent);
-  background-attachment: fixed;
+    radial-gradient(46rem 38rem at 100% 8%, rgb(37 99 235 / 0.42), transparent 72%),
+    radial-gradient(40rem 34rem at 0% 96%, rgb(37 99 235 / 0.3), transparent 72%),
+    radial-gradient(36rem 30rem at 0% 0%, rgb(86 73 240 / 0.26), transparent 72%),
+    radial-gradient(34rem 28rem at 100% 100%, rgb(13 148 136 / 0.18), transparent 72%);
 }
 
-/* White text stays readable on every colour of this gradient. It drifts once and stops: a gradient that keeps
-   animating repaints constantly, which is too much CPU for a page people leave open all day. */
-.aurora {
-  background-image: linear-gradient(110deg, #312e81, #5b21b6 35%, #86198f 70%, #9f1239);
-  background-size: 200% 200%;
-  animation: aurora-drift 6s ease-out both;
+body::after {
+  background-image:
+    radial-gradient(52rem 26rem at 50% -6rem, rgb(110 142 214 / 0.42), transparent 70%),
+    linear-gradient(rgb(255 255 255 / 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.028) 1px, transparent 1px);
+  background-size: auto, 56px 56px, 56px 56px;
+  mask-image: linear-gradient(black, black 45%, transparent 85%);
 }
 
-@keyframes aurora-drift {
-  from { background-position: 0% 50%; }
-  to { background-position: 100% 50%; }
+.app-bar {
+  background: rgb(9 14 26 / 0.62);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aurora { animation: none; }
+/* Glass. Cards are translucent over the page's glows, with a bright top edge drawn as a background, so it needs no extra element.
+   Buttons and chips also use the surface colour, so this names the elements that are panels.
+
+   Only the header and the headline panels really blur. Blurring every card cut scrolling on the findings page from 60 to 12
+   frames a second in software rendering, and it adds almost nothing here, because what's behind a card is already a smooth glow. */
+main :is(section, article, header, div, li, details).bg-surface:not(.bg-surface *),
+.glow-panel {
+  background-image:
+    linear-gradient(90deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.1) 45%, transparent 85%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.075), transparent 36%);
+  background-size: 100% 1px, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.glow-panel {
+  backdrop-filter: blur(16px) saturate(140%);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
+  box-shadow: var(--shadow-sm);
+}
+
+/* The glass effect needs a solid fallback, for browsers without it and for people who ask for less transparency. */
+@supports not (backdrop-filter: blur(1px)) {
+  :root { --color-surface: rgb(22 28 50 / 0.94); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root { --color-surface: rgb(22 28 50 / 0.96); }
+
+  .app-bar { background: rgb(10 13 30 / 0.96); }
+}
+
+/* Links read as links everywhere. Inside a sentence they're always underlined, so colour isn't the only signal. */
+.link {
+  color: var(--color-indigo-700);
+  text-underline-offset: 3px;
+  transition: color 150ms;
+}
+
+.link:hover {
+  color: var(--color-indigo-900);
+  text-decoration-line: underline;
+}
+
+.link-inline {
+  text-decoration-line: underline;
+}
+
+.glow-panel-header {
+  background: linear-gradient(100deg, rgb(37 99 235 / 0.28), rgb(124 58 237 / 0.22));
+  border-bottom: 1px solid var(--color-slate-200);
+}
+
+/* The brightest text on the page. */
+.glow-text {
+  background: linear-gradient(100deg, #ffffff 10%, #bae6fd 60%, #c4b5fd);
+  background-clip: text;
+  color: transparent;
+}
+
+.label-gradient {
+  background: linear-gradient(90deg, #7dd3fc, #c4b5fd);
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gloss: a soft reflection across the top half, a bright top edge and a glow in the tile's own colour. */
+.gloss {
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -1px 0 rgb(0 0 0 / 0.15), 0 4px 14px var(--tile-glow, transparent);
+}
+
+.gloss::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.06));
+  pointer-events: none;
+}
+
+.tile-violet { background-image: linear-gradient(145deg, #7468f7, #5649f0); --tile-glow: rgb(86 73 240 / 0.45); }
+.tile-blue { background-image: linear-gradient(145deg, #5f9ffc, #2f78f0); --tile-glow: rgb(64 137 251 / 0.45); }
+.tile-sky { background-image: linear-gradient(145deg, #4cc3ff, #1a8fe0); --tile-glow: rgb(30 155 235 / 0.42); }
+.tile-green { background-image: linear-gradient(145deg, #34d6a0, #0ea678); --tile-glow: rgb(20 184 134 / 0.42); }
+.tile-red { background-image: linear-gradient(145deg, #ff6b5e, #dc2f25); --tile-glow: rgb(229 52 42 / 0.45); }
+.tile-orange { background-image: linear-gradient(145deg, #ff9147, #ea6410); --tile-glow: rgb(240 112 26 / 0.42); }
+.tile-amber { background-image: linear-gradient(145deg, #fdd06a, #fab939); --tile-glow: rgb(250 185 57 / 0.4); color: #3b2a05; }
+
+/* Timeline circles: pale colours with dark text. */
+.node { color: #0b1020; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 0 10px var(--tile-glow, transparent); }
+.node-lilac { background-color: #aca7ef; --tile-glow: rgb(172 167 239 / 0.45); }
+.node-mint { background-color: #a9f0e0; --tile-glow: rgb(169 240 224 / 0.4); }
+.node-sky { background-color: #a9d6fb; --tile-glow: rgb(169 214 251 / 0.4); }
+.node-amber { background-color: #fbd78a; --tile-glow: rgb(251 215 138 / 0.4); }
+.node-rose { background-color: #f9b4ae; --tile-glow: rgb(249 180 174 / 0.42); }
+
+/* The line joining the steps of a running investigation. */
+.step-line:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 9.5px;
+  top: 26px;
+  bottom: -10px;
+  width: 1px;
+  background: var(--color-slate-300);
+}
+
+/* The solid colour stays underneath for anything that can't draw the gradient. The sheen crosses once on hover. */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  background-color: #1d4ed8;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.14), transparent 50%), linear-gradient(135deg, #1d4ed8, #5b3df0);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32), 0 4px 16px rgb(79 70 229 / 0.35);
+  color: #ffffff;
+  transition: box-shadow 150ms, filter 150ms, transform 150ms;
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.28), transparent);
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+
+.btn-primary:not(:disabled):hover {
+  filter: brightness(1.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 0 0 1px rgb(147 197 253 / 0.45), 0 6px 22px rgb(99 102 241 / 0.5);
+}
+
+.btn-primary:not(:disabled):hover::after {
+  transform: translateX(330%);
+  transition: transform 650ms ease-out;
 }
 
 .tab-active {
-  border-image: linear-gradient(90deg, #6366f1, #d946ef, #f59e0b) 1;
+  border-image: linear-gradient(90deg, #7dd3fc, #c4b5fd) 1;
+}
+
+.glow-red:hover {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 0 0 1px rgb(248 113 113 / 0.4), 0 8px 28px rgb(239 68 68 / 0.18);
+}
+
+.glow-orange:hover {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 0 0 1px rgb(251 146 60 / 0.4), 0 8px 28px rgb(249 115 22 / 0.18);
+}
+
+.glow-amber:hover {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 0 0 1px rgb(252 211 77 / 0.4), 0 8px 28px rgb(245 158 11 / 0.16);
+}
+
+/* Motion explains a change: something arrived, moved on or finished. Everything here is transform and opacity, so it stays
+   off the main thread, and it runs once. The only exceptions are work in progress and an active SEV-1. */
+.page-enter { animation: rise 280ms ease-out backwards; }
+.tab-panel { animation: fade 180ms ease-out backwards; }
+.slide-in { animation: slide-in 240ms ease-out backwards; }
+.pop { animation: pop 260ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
+
+/* "backwards", not "both": a finished animation must let go of transform, or the hover lift would stop working. */
+.stagger > * { animation: rise 300ms ease-out backwards; }
+.stagger > :nth-child(2) { animation-delay: 40ms; }
+.stagger > :nth-child(3) { animation-delay: 80ms; }
+.stagger > :nth-child(4) { animation-delay: 120ms; }
+.stagger > :nth-child(5) { animation-delay: 160ms; }
+.stagger > :nth-child(n + 6) { animation-delay: 200ms; }
+
+.grow-x {
+  transform-origin: left;
+  animation: grow-x 500ms ease-out backwards;
+}
+
+/* A slow pulse on the dot inside an active SEV-1 chip. */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: currentColor;
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: live-pulse 2s ease-out infinite;
+}
+
+/* Runs only while an investigation is running: the run has no percentage to report, so the bar doesn't pretend to have one. */
+.progress-track {
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+  background: var(--color-slate-200);
+}
+
+.progress-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 35%;
+  background: var(--color-indigo-500);
+  animation: progress 1.6s ease-in-out infinite;
+}
+
+/* Sections open and close smoothly where the browser supports it, and simply snap open elsewhere. */
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+
+  details::details-content {
+    height: 0;
+    overflow: clip;
+    opacity: 0;
+    transition: height 200ms ease-out, opacity 200ms ease-out, content-visibility 200ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    height: auto;
+    opacity: 1;
+  }
 }
 
 .flash {
   animation: flash 2s ease-out;
 }
 
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.8); }
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+}
+
+@keyframes live-pulse {
+  from { opacity: 0.7; transform: scale(1); }
+  to { opacity: 0; transform: scale(3); }
+}
+
+@keyframes progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
+}
+
 @keyframes flash {
-  0%, 30% { background-color: rgb(254 240 138); }
+  0%, 30% { background-color: var(--color-amber-100); }
   100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after, ::details-content {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
