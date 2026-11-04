@@ -35,7 +35,7 @@ public sealed class AppSettings
     {
         var env = environment ?? Environment.GetEnvironmentVariable;
         string? Trimmed(string key) => env(key)?.Trim() is { Length: > 0 } v ? v : null;
-        string? ConfigValue(string key)
+        string? ConfigValue(string sectionName, string key)
         {
             foreach (var path in ConfigPaths())
             {
@@ -43,7 +43,7 @@ public sealed class AppSettings
                 try
                 {
                     using var document = JsonDocument.Parse(File.ReadAllText(path));
-                    if (document.RootElement.TryGetProperty("GitHubCopilot", out var section)
+                    if (document.RootElement.TryGetProperty(sectionName, out var section)
                         && section.TryGetProperty(key, out var value)
                         && value.ValueKind == JsonValueKind.String)
                     {
@@ -55,23 +55,43 @@ public sealed class AppSettings
             }
             return null;
         }
-        string? Setting(string environmentKey, string configKey) => Trimmed(environmentKey) ?? ConfigValue(configKey);
+        string? RootConfigValue(string key)
+        {
+            foreach (var path in ConfigPaths())
+            {
+                if (!File.Exists(path)) continue;
+                try
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(path));
+                    if (document.RootElement.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String)
+                    {
+                        var text = value.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(text)) return text;
+                    }
+                }
+                catch (JsonException) { }
+            }
+            return null;
+        }
+        string? Setting(string sectionName, string environmentKey, string configKey) => Trimmed(environmentKey) ?? ConfigValue(sectionName, configKey);
 
-        var githubToken = Setting("GITHUB_COPILOT_TOKEN", "Token") ?? Trimmed("GITHUB_TOKEN");
-        var claudeApiKey = Trimmed("ANTHROPIC_API_KEY");
+        var githubToken = Setting("GitHubCopilot", "GITHUB_COPILOT_TOKEN", "Token") ?? Trimmed("GITHUB_TOKEN");
+        var claudeApiKey = Setting("Claude", "ANTHROPIC_API_KEY", "ApiKey");
         var dbPath = Trimmed("DB_PATH");
-        var provider = (Trimmed("LLM_PROVIDER") ?? "auto").ToLowerInvariant();
+        var provider = (Trimmed("LLM_PROVIDER") ?? RootConfigValue("LLM_PROVIDER") ?? "auto").ToLowerInvariant();
+        var configuredMode = (Trimmed("LLM_MODE") ?? RootConfigValue("LLM_MODE"))?.ToLowerInvariant();
 
         return new AppSettings
         {
             GitHubToken = githubToken,
-            GitHubModelsBaseUrl = (Setting("GITHUB_COPILOT_BASE_URL", "BaseUrl") ?? "https://models.github.ai/inference").TrimEnd('/'),
+            GitHubModelsBaseUrl = (Setting("GitHubCopilot", "GITHUB_COPILOT_BASE_URL", "BaseUrl") ?? "https://models.github.ai/inference").TrimEnd('/'),
             ClaudeApiKey = claudeApiKey,
-            ClaudeBaseUrl = NormalizeBaseUrl(Trimmed("ANTHROPIC_BASE_URL")) ?? "https://api.anthropic.com",
+            ClaudeBaseUrl = NormalizeBaseUrl(Setting("Claude", "ANTHROPIC_BASE_URL", "BaseUrl")) ?? "https://api.anthropic.com",
             Provider = provider is "github" or "anthropic" or "auto" ? provider : "auto",
-            // Live mode needs a GitHub token; without one we fall back to the deterministic recorded mode.
-            LlmMode = env("LLM_MODE") == "live" && (githubToken is not null || claudeApiKey is not null) ? "live" : "recorded",
-            CopilotModel = Setting("GITHUB_COPILOT_MODEL", "Model") ?? "openai/gpt-4.1-mini",
+            // A configured provider key enables live mode unless it is explicitly disabled.
+            LlmMode = configuredMode == "recorded" ? "recorded" : (githubToken is not null || claudeApiKey is not null ? "live" : "recorded"),
+            CopilotModel = Setting("GitHubCopilot", "GITHUB_COPILOT_MODEL", "Model") ?? "openai/gpt-4.1-mini",
+            ClaudeModel = Setting("Claude", "CLAUDE_MODEL", "Model") ?? "claude-opus-5-5",
             LiveAccessCode = Trimmed("LIVE_ACCESS_CODE"),
             LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 20,
             DemoMode = (env("DEMO_MODE") ?? "true") == "true",
@@ -79,7 +99,7 @@ public sealed class AppSettings
             DbPath = dbPath == ":memory:" ? ":memory:" : Path.GetFullPath(dbPath ?? "data/resolveai.db", McpConfig.RepoRoot()),
             Host = Trimmed("HOST") ?? "127.0.0.1",
             Port = int.TryParse(env("API_PORT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var port) && port >= 0 ? port : 8787,
-            CorsOrigins = (Trimmed("CORS_ORIGINS") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),            
+            CorsOrigins = (Trimmed("CORS_ORIGINS") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
             McpEnabled = (env("MCP_ENABLED") ?? "true") == "true",
             MaxFollowUps = int.TryParse(Trimmed("MCP_MAX_FOLLOWUP_CALLS"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var followUps) ? Math.Clamp(followUps, 0, 20) : 8,
         };
