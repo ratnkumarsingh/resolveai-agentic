@@ -85,20 +85,20 @@ public static class EvalProgram
         ILlmProvider llm = new RecordedProvider(0);
         if (o.Mode == "live")
         {
-            Console.WriteLine($"Plan: {plan.Cases.Count} cases x {plan.Runs} runs = {plan.TotalRuns} live runs on {settings.Model}.");
+            Console.WriteLine($"Plan: {plan.Cases.Count} cases x {plan.Runs} runs = {plan.TotalRuns} live runs on {settings.CopilotModel}.");
             Console.WriteLine($"Estimate: about {plan.EstimatedTokens:N0} tokens, at {RunPlan.EstimatedTokensPerRun:N0} per run (measured in Phase 0).");
-            if (LiveRefusal(o, settings.ApiKey) is { } refusal)
+            if (LiveRefusal(o, settings.ClaudeApiKey) is { } refusal)
             {
                 Console.WriteLine(refusal);
-                return settings.ApiKey is null ? 2 : 0;
+                return settings.ClaudeApiKey is null ? 2 : 0;
             }
-            llm = new ClaudeProvider(settings.ApiKey!, settings.Model, baseUrl: settings.BaseUrl);
+            llm = new ClaudeProvider(settings.ClaudeApiKey!, settings.CopilotModel, baseUrl: settings.GitHubModelsBaseUrl);
         }
 
         var started = DateTimeOffset.UtcNow;
         var result = await Runner.RunAll(plan, llm, r => Console.WriteLine($"{r.CaseId,-10} run {r.RunNumber}: {(r.Passed ? "pass" : "FAIL")} {r.TotalTokens,7:N0} tokens {r.Seconds,6:F1}s  {r.TopTitle ?? r.Error ?? "(no hypothesis)"}"));
 
-        var header = new ReportHeader(o.Design, o.Mode, o.Mode == "live" ? settings.Model : "recorded fixtures", settings.BaseUrl is { } url && o.Mode == "live" ? new Uri(url).Host : null, Prompts.Version,
+        var header = new ReportHeader(o.Design, o.Mode, o.Mode == "live" ? settings.CopilotModel : "recorded fixtures", settings.GitHubModelsBaseUrl is { } url && o.Mode == "live" ? new Uri(url).Host : null, Prompts.Version,
             started.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture), plan.Cases.Count, plan.Runs, result.StoppedEarly);
         var markdown = Report.Markdown(header, result.Scores);
         Console.WriteLine();

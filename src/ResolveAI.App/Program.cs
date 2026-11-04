@@ -32,6 +32,11 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 var settings = AppSettings.Load();
 builder.WebHost.UseUrls($"http://{settings.Host}:{settings.Port}");
 
+builder.Services.AddCors(options => options.AddPolicy("integration", policy =>
+{
+    if (settings.CorsOrigins.Length > 0) policy.WithOrigins(settings.CorsOrigins).AllowAnyHeader().AllowAnyMethod();
+}));
+
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 // Tests register their own AppDeps first; the real one (which starts child processes) is only built when nothing else was registered.
@@ -57,6 +62,7 @@ app.Use((http, next) =>
     return next();
 });
 app.UseApiErrors();
+if (settings.CorsOrigins.Length > 0) app.UseCors("integration");
 app.UseCircuitOriginCheck();
 app.UseAntiforgery();
 
@@ -74,9 +80,9 @@ app.Lifetime.ApplicationStarted.Register(() =>
     var live = deps.Providers.Live is null
         ? "off (no API key)"
         : deps.Settings.LlmMode == "live"
-            ? $"default ({deps.Settings.Model})"
+            ? $"default ({deps.Settings.CopilotModel})"
             : !string.IsNullOrEmpty(deps.Settings.LiveAccessCode)
-                ? $"with access code ({deps.Settings.Model}, {deps.Settings.LiveDailyLimit}/day)"
+                ? $"with access code ({deps.Settings.CopilotModel}, {deps.Settings.LiveDailyLimit}/day)"
                 : "off (set LIVE_ACCESS_CODE to allow it)";
     Console.WriteLine($"ResolveAI on http://{deps.Settings.Host}:{deps.Settings.Port} — recorded mode; live Claude: {live}");
 });

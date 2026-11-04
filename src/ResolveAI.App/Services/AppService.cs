@@ -61,9 +61,9 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
     public AppConfig Config() => new()
     {
         LlmMode = DefaultProvider.Mode,
-        Model = DefaultProvider.Mode == "live" ? settings.Model : "recorded fixtures",
+        Model = DefaultProvider.Mode == "live" ? DefaultProvider.Model ?? "configured live model" : "recorded fixtures",
         LiveAvailable = LiveAvailable,
-        LiveModel = providers.Live is not null ? settings.Model : null,
+        LiveModel = providers.Live?.Model,
         LiveDailyLimit = settings.LiveDailyLimit,
         LiveRunsToday = Investigations.LiveRunsToday(db),
         DemoMode = settings.DemoMode,
@@ -97,6 +97,57 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
     }
 
     public IncidentEvidence Evidence(string idOrKey) => Pipeline.EvidenceLoader.Load(db, IncidentOr404(idOrKey));
+
+    public Incident CreateIncident(string title, string serviceName, string severity, string environment, string description, string impactSummary)
+    {
+        static string Required(string name, string value, int max)
+        {
+            var trimmed = value?.Trim() ?? "";
+            if (trimmed.Length == 0) throw new AppError(400, $"Invalid request: {name} is required.");
+            if (trimmed.Length > max) throw new AppError(400, $"Invalid request: {name} must be at most {max} characters.");
+            return trimmed;
+        }
+
+        severity = Required("severity", severity, 10);
+        if (severity is not ("SEV-1" or "SEV-2" or "SEV-3" or "SEV-4")) throw new AppError(400, "Invalid request: severity is not valid.");
+        var now = Js.IsoNow();
+        var incident = new Incident
+        {
+            Id = Guid.NewGuid().ToString(),
+            Key = $"INC-{db.Get<int>("SELECT COALESCE(MAX(CAST(SUBSTR(key, 5) AS INTEGER)), 0) + 1 FROM incidents WHERE key LIKE 'INC-%'"):D4}",
+            Title = Required("title", title, 200),
+            ServiceName = Required("service name", serviceName, 100),
+            Severity = severity,
+            Status = "investigating",
+            Environment = Required("environment", environment, 100),
+            StartedAt = now,
+            DetectedAt = now,
+            Description = Required("description", description, 5000),
+            ImpactSummary = Required("impact summary", impactSummary, 1000),
+        };
+        db.Run(
+            """
+            INSERT INTO incidents (id, key, title, service_name, severity, status, environment, started_at, detected_at, description, impact_summary, created_at)
+            VALUES (@Id, @Key, @Title, @ServiceName, @Severity, @Status, @Environment, @StartedAt, @DetectedAt, @Description, @ImpactSummary, @CreatedAt)
+            """, new { incident.Id, incident.Key, incident.Title, incident.ServiceName, incident.Severity, incident.Status, incident.Environment, incident.StartedAt, incident.DetectedAt, incident.Description, incident.ImpactSummary, CreatedAt = now });
+        return incident;
+    }
+
+    public (Incident Incident, string InvestigationId, string Status) CreateIncidentAndStart(CreateIncidentBody body, Caller caller)
+    {
+        if (body.Question?.Length > 500) throw new AppError(400, "Invalid request: question must be at most 500 characters.");
+        var incident = CreateIncident(body.Title, string.IsNullOrWhiteSpace(body.ApplicationName) ? "user-reported" : body.ApplicationName!, body.Severity, body.Environment, body.Description, body.ImpactSummary);
+        try
+        {
+            var (id, status) = StartInvestigation(incident.Id, new StartInvestigationBody { Question = body.Question, Mode = body.Mode }, caller);
+            return (incident, id, status);
+        }
+        catch
+        {
+            db.Run("DELETE FROM incidents WHERE id = @id", new { id = incident.Id });
+            throw;
+        }
+    }
 
     public (string InvestigationId, string Status) StartInvestigation(string idOrKey, StartInvestigationBody body, Caller caller)
     {

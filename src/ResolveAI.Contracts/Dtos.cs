@@ -60,6 +60,18 @@ public sealed class StartInvestigationBody
     public string? Mode { get; set; }
 }
 
+public sealed class CreateIncidentBody
+{
+    public string Title { get; set; } = "";
+    public string? ApplicationName { get; set; }
+    public string Severity { get; set; } = "SEV-2";
+    public string Environment { get; set; } = "production";
+    public string Description { get; set; } = "";
+    public string ImpactSummary { get; set; } = "";
+    public string? Question { get; set; }
+    public string? Mode { get; set; }
+}
+
 public sealed class CreateRcaBody
 {
     public string InvestigationId { get; set; } = "";

@@ -38,7 +38,7 @@ public sealed class AppFixture : IAsyncLifetime
             DemoMode = true,
             LiveAccessCode = AccessCode,
             MaxFollowUps = 8,
-            ApiKey = LiveByDefault ? "fake-key-for-tests" : null,
+            ClaudeApiKey = LiveByDefault ? "fake-key-for-tests" : null,
             LlmMode = LiveByDefault ? "live" : "recorded",
         });
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>

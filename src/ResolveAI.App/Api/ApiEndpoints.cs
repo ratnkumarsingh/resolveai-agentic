@@ -60,6 +60,7 @@ public static class ApiEndpoints
     {
         var api = app.MapGroup("/api");
 
+        api.MapGet("/health", () => JsonResult(new { status = "ok", service = "resolveai" }));
         api.MapGet("/config", ([FromServices] AppService s) => JsonResult(s.Config()));
         api.MapGet("/systems", ([FromServices] AppService s) => JsonResult(s.Systems()));
 
@@ -68,6 +69,22 @@ public static class ApiEndpoints
 
         api.MapGet("/incidents/{id}", ([FromServices] AppService s, string id) => JsonResult(s.IncidentDetail(id)));
         api.MapGet("/incidents/{id}/evidence", ([FromServices] AppService s, string id) => JsonResult(s.Evidence(id)));
+       
+        api.MapPost("/incidents", async ([FromServices] AppService s, HttpContext http) =>
+        {
+            var body = await Body<CreateIncidentBody>(http.Request,
+                ("title", JsonValueKind.String), ("application_name", JsonValueKind.String), ("severity", JsonValueKind.String),
+                ("environment", JsonValueKind.String), ("description", JsonValueKind.String), ("impact_summary", JsonValueKind.String),
+                ("question", JsonValueKind.String), ("mode", JsonValueKind.String));
+            var result = s.CreateIncidentAndStart(body, CallerOf(http));
+            return JsonResult(new
+            {
+                incident_id = result.Incident.Id,
+                incident_key = result.Incident.Key,
+                investigation_id = result.InvestigationId,
+                status = result.Status,
+            }, 202);
+        });
 
         api.MapPost("/incidents/{id}/investigations", async ([FromServices] AppService s, string id, HttpContext http) =>
         {

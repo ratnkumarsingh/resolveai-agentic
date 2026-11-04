@@ -27,7 +27,7 @@
                     Data source: Demo dataset
                 </span>
                 <span class="@Ui.Cx("inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 font-medium text-white ring-1 ring-white/15")"
-                      title="@(_config.LlmMode == "live" ? "Investigations call Claude" : "Investigations replay recorded/rule-based analysis; no model is called")">
+                      title="@(_config.LlmMode == "live" ? "Investigations use the configured live model" : "Investigations replay recorded/rule-based analysis; no model is called")">
                     <span aria-hidden="true" class="@Ui.Cx("h-1.5 w-1.5 rounded-full", _config.LlmMode == "live" ? "bg-emerald-400" : "bg-slate-400")"></span>
                     LLM: @(_config.LlmMode == "live" ? $"live · {_config.Model}" : _config.LiveAvailable ? "recorded · live on request" : "recorded (offline)")
                 </span>
@@ -46,7 +46,7 @@
 </div>
 
 @code {
-    private static readonly (string To, string Label)[] Links = [("/", "Incidents"), ("/systems", "Systems"), ("/settings", "Settings & demo data")];
+    private static readonly (string To, string Label)[] Links = [("/", "Incidents"), ("/investigate", "Investigate incident"), ("/systems", "Systems"), ("/settings", "Settings & demo data")];
 
     private AppConfig _config = new();
 

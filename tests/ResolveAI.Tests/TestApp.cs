@@ -80,7 +80,7 @@ public sealed class TestApp : IAsyncDisposable
         Db = new Db(":memory:");
         Seed.Demo(Db);
         var providers = llm.Mode == "live" ? new Providers(new RecordedProvider(0), llm) : new Providers(llm, live);
-        var settings = new AppSettings { LlmMode = llm.Mode, Model = "test-model", LiveAccessCode = accessCode, LiveDailyLimit = dailyLimit, DemoMode = demoMode, McpEnabled = false };
+        var settings = new AppSettings { LlmMode = llm.Mode, CopilotModel = "test-model", LiveAccessCode = accessCode, LiveDailyLimit = dailyLimit, DemoMode = demoMode, McpEnabled = false };
         var deps = new AppDeps(Db, providers, systems, settings);
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
         {

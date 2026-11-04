@@ -16,7 +16,15 @@ public sealed record AppDeps(Db Db, Providers Providers, Systems? Systems, AppSe
         // First run: start with the demo dataset so the app is never empty.
         if (db.Get<int>("SELECT COUNT(*) FROM incidents") == 0) Seed.Demo(db);
 
-        var providers = new Providers(new RecordedProvider(), settings.ApiKey is not null ? new ClaudeProvider(settings.ApiKey, settings.Model, baseUrl: settings.BaseUrl) : null);
+        ILlmProvider? live = settings.Provider switch
+        {
+            "anthropic" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel, baseUrl: settings.BaseUrl),
+            "github" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel, settings.GitHubModelsBaseUrl),
+            "auto" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel, settings.GitHubModelsBaseUrl),
+            "auto" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel, baseUrl: settings.BaseUrl),
+            _ => null,
+        };
+        var providers = new Providers(new RecordedProvider(), live);
 
         // One MCP server per system. A system that fails to start is shown as an error on the Systems page; it never stops the app.
         Systems? systems = null;

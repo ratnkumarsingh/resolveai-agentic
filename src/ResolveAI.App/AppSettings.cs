@@ -1,16 +1,22 @@
 using System.Globalization;
+using System.Text.Json;
 using ResolveAI.Mcp;
 
 namespace ResolveAI.App;
 
 public sealed class AppSettings
 {
-    public string? ApiKey { get; init; }
-    /// <summary>A gateway that speaks the Anthropic Messages API. Null means Anthropic's own API.</summary>
-    public string? BaseUrl { get; init; }
+    public string? GitHubToken { get; init; }
+    public string GitHubModelsBaseUrl { get; init; } = "https://models.github.ai/inference";
+    public string? ClaudeApiKey { get; init; }
+    public string ClaudeBaseUrl { get; init; } = "https://api.anthropic.com";
+    // Compatibility alias for existing integrations and tests.
+    public string? BaseUrl => ClaudeBaseUrl == "https://api.anthropic.com" ? null : ClaudeBaseUrl;
+    public string Provider { get; init; } = "auto";
     /// <summary>Default mode for runs that don't ask for live.</summary>
     public string LlmMode { get; init; } = "recorded";
-    public string Model { get; init; } = "claude-opus-5-5";
+    public string ClaudeModel { get; init; } = "claude-opus-5-5";
+    public string CopilotModel { get; init; } = "openai/gpt-4.1-mini";
     /// <summary>With an API key set, a run can opt into live Claude by sending this code.</summary>
     public string? LiveAccessCode { get; init; }
     public int LiveDailyLimit { get; init; } = 20;
@@ -19,6 +25,7 @@ public sealed class AppSettings
     public string DbPath { get; init; } = ":memory:";
     public string Host { get; init; } = "127.0.0.1";
     public int Port { get; init; } = 8787;
+    public string[] CorsOrigins { get; init; } = [];
     /// <summary>Start the MCP servers (database, files, deploys, metrics) and check them during investigations.</summary>
     public bool McpEnabled { get; init; } = true;
     /// <summary>Most extra tool calls the model may make per investigation.</summary>
@@ -28,16 +35,43 @@ public sealed class AppSettings
     {
         var env = environment ?? Environment.GetEnvironmentVariable;
         string? Trimmed(string key) => env(key)?.Trim() is { Length: > 0 } v ? v : null;
+        string? ConfigValue(string key)
+        {
+            foreach (var path in ConfigPaths())
+            {
+                if (!File.Exists(path)) continue;
+                try
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(path));
+                    if (document.RootElement.TryGetProperty("GitHubCopilot", out var section)
+                        && section.TryGetProperty(key, out var value)
+                        && value.ValueKind == JsonValueKind.String)
+                    {
+                        var text = value.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(text)) return text;
+                    }
+                }
+                catch (JsonException) { }
+            }
+            return null;
+        }
+        string? Setting(string environmentKey, string configKey) => Trimmed(environmentKey) ?? ConfigValue(configKey);
 
-        var apiKey = Trimmed("ANTHROPIC_API_KEY");
+        var githubToken = Setting("GITHUB_COPILOT_TOKEN", "Token") ?? Trimmed("GITHUB_TOKEN");
+        var claudeApiKey = Trimmed("ANTHROPIC_API_KEY");
         var dbPath = Trimmed("DB_PATH");
+        var provider = (Trimmed("LLM_PROVIDER") ?? "auto").ToLowerInvariant();
+
         return new AppSettings
         {
-            ApiKey = apiKey,
-            BaseUrl = NormalizeBaseUrl(Trimmed("ANTHROPIC_BASE_URL")),
-            // Live mode needs a key; without one we fall back to the deterministic recorded mode.
-            LlmMode = env("LLM_MODE") == "live" && apiKey is not null ? "live" : "recorded",
-            Model = Trimmed("CLAUDE_MODEL") ?? "claude-opus-5-5",
+            GitHubToken = githubToken,
+            GitHubModelsBaseUrl = (Setting("GITHUB_COPILOT_BASE_URL", "BaseUrl") ?? "https://models.github.ai/inference").TrimEnd('/'),
+            ClaudeApiKey = claudeApiKey,
+            ClaudeBaseUrl = NormalizeBaseUrl(Trimmed("ANTHROPIC_BASE_URL")) ?? "https://api.anthropic.com",
+            Provider = provider is "github" or "anthropic" or "auto" ? provider : "auto",
+            // Live mode needs a GitHub token; without one we fall back to the deterministic recorded mode.
+            LlmMode = env("LLM_MODE") == "live" && (githubToken is not null || claudeApiKey is not null) ? "live" : "recorded",
+            CopilotModel = Setting("GITHUB_COPILOT_MODEL", "Model") ?? "openai/gpt-4.1-mini",
             LiveAccessCode = Trimmed("LIVE_ACCESS_CODE"),
             LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 20,
             DemoMode = (env("DEMO_MODE") ?? "true") == "true",
@@ -45,16 +79,30 @@ public sealed class AppSettings
             DbPath = dbPath == ":memory:" ? ":memory:" : Path.GetFullPath(dbPath ?? "data/resolveai.db", McpConfig.RepoRoot()),
             Host = Trimmed("HOST") ?? "127.0.0.1",
             Port = int.TryParse(env("API_PORT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var port) && port >= 0 ? port : 8787,
+            CorsOrigins = (Trimmed("CORS_ORIGINS") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),            
             McpEnabled = (env("MCP_ENABLED") ?? "true") == "true",
             MaxFollowUps = int.TryParse(Trimmed("MCP_MAX_FOLLOWUP_CALLS"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var followUps) ? Math.Clamp(followUps, 0, 20) : 8,
         };
     }
 
-    /// <summary>The SDK appends /v1/messages itself, and gateways often show their URL ending in /v1, so that ending is removed rather than doubled.</summary>
     private static string? NormalizeBaseUrl(string? url)
     {
-        var trimmed = url?.TrimEnd('/');
+        var trimmed = url?.Trim().TrimEnd('/');
         return trimmed is not null && trimmed.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) ? trimmed[..^3] : trimmed;
+    }
+
+    private static IEnumerable<string> ConfigPaths()
+    {
+        yield return Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") is { Length: > 0 } environment)
+        {
+            yield return Path.Combine(AppContext.BaseDirectory, $"appsettings.{environment}.json");
+        }
+        yield return Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") is { Length: > 0 } currentEnvironment)
+        {
+            yield return Path.Combine(Directory.GetCurrentDirectory(), $"appsettings.{currentEnvironment}.json");
+        }
     }
 
     /// <summary>Reads KEY=value lines into the environment. A variable that is already set wins, so the real environment can override the file.</summary>
