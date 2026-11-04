@@ -1,0 +1,154 @@
+:root {
+    --color-page: #eef5fb;
+    --color-surface: #ffffff;
+    --color-raised: #f8fbff;
+    --color-on-accent: #ffffff;
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #0f172a;
+    --color-indigo-500: #6366f1;
+    --color-indigo-600: #4f46e5;
+    --color-indigo-700: #4338ca;
+    --color-red-700: #b91c1c;
+    --color-red-800: #991b1b;
+    --color-red-900: #7f1d1d;
+    --color-orange-700: #c2410c;
+    --color-orange-800: #9a3412;
+    --color-orange-900: #7c2d12;
+    --color-amber-700: #b45309;
+    --color-amber-800: #92400e;
+    --color-amber-900: #78350f;
+    --color-emerald-700: #047857;
+    --color-emerald-800: #065f46;
+    --color-emerald-900: #064e3b;
+    --color-sky-700: #0369a1;
+    --color-sky-800: #075985;
+    --color-sky-900: #0c4a6e;
+    --color-violet-700: #6d28d9;
+    --color-violet-800: #5b21b6;
+    --color-violet-900: #4c1d95;
+    --color-teal-700: #0f766e;
+    --color-teal-800: #115e59;
+    --color-teal-900: #134e4a;
+    --color-cyan-700: #0e7490;
+    --color-cyan-800: #155e75;
+    --color-cyan-900: #164e63;
+    --color-pink-700: #be185d;
+    --color-pink-800: #9d174d;
+    --color-pink-900: #831843;
+}
+
+html, body { background: var(--color-page); color: var(--color-slate-900); }
+body { background-image: linear-gradient(180deg, #f8fbff 0, var(--color-page) 360px); }
+main { background: transparent; }
+
+/* Restore readable contrast for selectors that were authored for the original dark theme. */
+h1, h2, h3, h4, h5, h6,
+:is(h1, h2, h3, h4).text-slate-900,
+.bg-surface :is(h1, h2, h3, h4, h5, h6),
+.glow-panel :is(h1, h2, h3, h4, h5, h6) {
+    color: #0f2740 !important;
+    text-shadow: none !important;
+}
+.text-slate-900 { color: #0f172a !important; }
+.text-slate-800 { color: #1e293b !important; }
+.text-slate-700 { color: #334155 !important; }
+.text-slate-600 { color: #475569 !important; }
+.text-slate-500 { color: #64748b !important; }
+.text-slate-400 { color: #64748b !important; }
+.text-white { color: #ffffff !important; }
+
+/* Keep common semantic text roles readable when they are rendered on bright cards. */
+.bg-surface .text-indigo-500, .bg-surface .text-indigo-600, .bg-surface .text-indigo-700,
+.glow-panel .text-indigo-500, .glow-panel .text-indigo-600, .glow-panel .text-indigo-700 { color: #4338ca !important; }
+.bg-surface .text-blue-500, .bg-surface .text-blue-600, .bg-surface .text-blue-700,
+.glow-panel .text-blue-500, .glow-panel .text-blue-600, .glow-panel .text-blue-700 { color: #1d4ed8 !important; }
+.bg-surface .text-gray-500, .bg-surface .text-gray-600, .bg-surface .text-gray-700,
+.glow-panel .text-gray-500, .glow-panel .text-gray-600, .glow-panel .text-gray-700 { color: #475569 !important; }
+
+.app-bar {
+    background: #0b1730 !important;
+    border-bottom-color: rgb(255 255 255 / 14%) !important;
+}
+.app-bar nav a { color: #cbd5e1 !important; }
+.app-bar nav a:hover, .app-bar nav a.bg-white\/15 { color: #ffffff !important; }
+.app-bar > div > a { color: #ffffff !important; }
+.app-bar .text-white { color: #ffffff !important; }
+.menu-dropdown summary::-webkit-details-marker { display: none; }
+.menu-dropdown summary { color: #e2e8f0 !important; }
+.menu-dropdown[open] summary { background: rgb(255 255 255 / 12%); color: #ffffff !important; }
+.menu-dropdown-panel { background: #ffffff; border: 1px solid #cbd5e1; box-shadow: 0 10px 24px rgb(15 23 42 / 18%); }
+.app-bar .menu-dropdown-panel a.menu-dropdown-link { color: #334155 !important; }
+.app-bar .menu-dropdown-panel a.menu-dropdown-link:hover,
+.app-bar .menu-dropdown-panel a.menu-dropdown-active { background: #e8f3fb; color: #075985 !important; }
+
+.glow-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbdced !important;
+    box-shadow: 0 8px 24px rgb(51 92 128 / 10%), inset 0 1px 0 #ffffff !important;
+}
+.glow-text { color: #0f2740 !important; text-shadow: none !important; }
+.label-gradient { color: #0782bd !important; background: none !important; -webkit-text-fill-color: currentColor !important; }
+
+.bg-surface { background-color: #ffffff !important; }
+.bg-raised { background-color: #f8fbff !important; }
+.text-on-accent { color: #ffffff !important; }
+
+/* Light surfaces for the existing incident cards and data panels. */
+.border-slate-200 { border-color: #d7e2ed !important; }
+.border-slate-100 { border-color: #e7eef5 !important; }
+.shadow-sm { box-shadow: 0 2px 8px rgb(39 74 105 / 7%) !important; }
+
+/* The original secondary button was designed for the dark canvas. Keep the same blue treatment, but use readable text on light surfaces. */
+.btn-secondary {
+    background-color: #e6f3ff !important;
+    background-image: none !important;
+    border-color: #8bc7f4 !important;
+    color: #075985 !important;
+    text-shadow: none !important;
+}
+.btn-secondary:not(:disabled):hover {
+    background-color: #cfeaff !important;
+    border-color: #46a9e8 !important;
+    color: #0c4a6e !important;
+    box-shadow: 0 2px 8px rgb(14 116 144 / 15%) !important;
+}
+.btn-ghost { color: #334155 !important; }
+.btn-ghost:not(:disabled):hover { background-color: #e7f2fb !important; color: #0f172a !important; }
+input:not([type="checkbox"], [type="radio"]), select, textarea {
+    color: #1e293b !important;
+    border-color: #b9c9d8;
+}
+input:not([type="checkbox"], [type="radio"]):focus, select:focus, textarea:focus {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 3px rgb(79 70 229 / 15%) !important;
+}
+option { color: #1e293b; background: #ffffff; }
+
+/* Evidence and AI panels use semantic Tailwind colors; these darker text roles are intentional on bright surfaces. */
+.bg-surface .text-sky-700, .bg-surface .text-sky-800, .bg-surface .text-sky-900,
+.glow-panel .text-sky-700, .glow-panel .text-sky-800, .glow-panel .text-sky-900 { color: #0369a1 !important; }
+.bg-surface .text-emerald-700, .bg-surface .text-emerald-800, .bg-surface .text-emerald-900 { color: #047857 !important; }
+.bg-surface .text-amber-700, .bg-surface .text-amber-800, .bg-surface .text-amber-900 { color: #92400e !important; }
+.bg-surface .text-violet-700, .bg-surface .text-violet-800, .bg-surface .text-violet-900 { color: #6d28d9 !important; }
+.bg-surface .text-red-700, .bg-surface .text-red-800, .bg-surface .text-red-900 { color: #991b1b !important; }
+.bg-surface .text-orange-700, .bg-surface .text-orange-800, .bg-surface .text-orange-900 { color: #9a3412 !important; }
+.bg-surface .text-teal-700, .bg-surface .text-teal-800, .bg-surface .text-teal-900 { color: #0f766e !important; }
+.bg-surface .text-cyan-700, .bg-surface .text-cyan-800, .bg-surface .text-cyan-900 { color: #0e7490 !important; }
+.bg-surface .text-pink-700, .bg-surface .text-pink-800, .bg-surface .text-pink-900 { color: #be185d !important; }
+.bg-surface .text-sky-500, .bg-surface .text-emerald-500, .bg-surface .text-amber-500,
+.bg-surface .text-violet-500, .bg-surface .text-red-500, .bg-surface .text-orange-500,
+.bg-surface .text-teal-500, .bg-surface .text-cyan-500, .bg-surface .text-pink-500 {
+    filter: brightness(.78) saturate(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
