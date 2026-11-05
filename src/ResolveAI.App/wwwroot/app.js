@@ -6,4 +6,7 @@ window.resolveai = {
   copy(text) {
     return navigator.clipboard.writeText(text);
   },
+  closeMenu(id) {
+    document.getElementById(id)?.removeAttribute("open");
+  },
 };
