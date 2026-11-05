@@ -9,7 +9,7 @@
 @if (_loadError is not null)
 {
     <div class="space-y-3">
-        <a href="/" class="link text-sm">← Incidents</a>
+        <a href="/incidents" class="link text-sm">← Incidents</a>
         <ErrorBox Message="@_loadError" OnRetry="LoadAll" />
     </div>
 }
@@ -18,7 +18,7 @@ else if (_detail is not null)
     var incident = _detail.Incident;
     var runs = _detail.Investigations;
     <div class="page-enter space-y-5">
-        <a href="/" class="link text-sm">← Incident queue</a>
+        <a href="/incidents" class="link text-sm">← Incident queue</a>
 
         <header class="@Ui.Cx("rounded-lg border border-slate-200 bg-surface", Collapsed ? "px-5 py-3" : "p-5")">
             <div class="flex flex-wrap items-start gap-4">
