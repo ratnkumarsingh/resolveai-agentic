@@ -1,0 +1,93 @@
+@page "/investigate"
+@inject AppService Service
+@inject NavigationManager Nav
+@inject AccessCodeStore Codes
+
+<PageTitle>Investigate incident · ResolveAI</PageTitle>
+
+<div class="page-enter mx-auto max-w-3xl space-y-5">
+    <div>
+        <a href="/" class="link text-sm">← Incident queue</a>
+        <h1 class="mt-3 text-2xl font-semibold tracking-tight">Investigate an incident</h1>
+        <p class="mt-1 text-sm text-slate-600">Enter the incident context and ask ResolveAI to investigate it using the configured evidence sources.</p>
+    </div>
+
+    <form class="space-y-5 rounded-lg border border-slate-200 bg-surface p-5 shadow-sm" @onsubmit="Submit" @onsubmit:preventDefault="true">
+        <div class="grid gap-4 sm:grid-cols-2">
+            <label class="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
+                Title
+                <input @bind="_title" maxlength="200" required placeholder="Checkout errors after deployment" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal" />
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700">
+                Application name <span class="font-normal text-slate-500">(optional)</span>
+                <input @bind="_application" maxlength="100" placeholder="Checkout" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal" />
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700">
+                Environment
+                <input @bind="_environment" maxlength="100" required placeholder="production" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal" />
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700">
+                Severity
+                <select @bind="_severity" class="w-full rounded-md border border-slate-300 bg-surface px-3 py-2 font-normal">
+                    <option>SEV-1</option><option>SEV-2</option><option>SEV-3</option><option>SEV-4</option>
+                </select>
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
+                Customer impact
+                <input @bind="_impact" maxlength="1000" required placeholder="Customers cannot complete checkout" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal" />
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
+                Incident details
+                <textarea @bind="_description" maxlength="5000" required rows="6" placeholder="What happened, when it started, and any symptoms or changes already noticed…" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal"></textarea>
+            </label>
+            <label class="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">
+                Question for AI <span class="font-normal text-slate-500">(optional)</span>
+                <input @bind="_question" maxlength="500" placeholder="What changed and what should we check first?" class="w-full rounded-md border border-slate-300 px-3 py-2 font-normal" />
+            </label>
+        </div>
+
+        @if (LiveAllowed)
+        {
+            <label class="flex items-start gap-2 text-xs text-slate-600">
+                <input type="checkbox" @bind="_live" class="mt-0.5" />
+                <span>Use live Claude (@_config.LiveModel) · @Math.Max(0, _config.LiveDailyLimit - _config.LiveRunsToday) of @_config.LiveDailyLimit left today</span>
+            </label>
+        }
+        @if (_error is not null) { <ErrorBox Message="@_error" /> }
+        <div class="flex justify-end gap-2">
+            <a href="/" class="btn-secondary rounded-md px-4 py-2 text-sm font-medium">Cancel</a>
+            <Btn Type="submit" Variant="primary" Disabled="@_submitting">
+                @if (_submitting) { <Spinner Class="h-3.5 w-3.5" /> }
+                @(_submitting ? "Starting investigation…" : "Ask AI to investigate")
+            </Btn>
+        </div>
+    </form>
+</div>
+
+@code {
+    [CascadingParameter(Name = "IsLocal")] public bool IsLocal { get; set; }
+    private AppConfig _config = new();
+    private string _title = "", _application = "", _environment = "production", _impact = "", _description = "", _question = "", _severity = "SEV-2", _error = "";
+    private bool _live, _submitting;
+    private bool LiveAllowed => _config.LiveAvailable;
+
+    protected override void OnInitialized() => _config = Service.Config();
+
+    private void Submit()
+    {
+        _error = string.Empty;
+        _submitting = true;
+        try
+        {
+            var incident = Service.CreateIncident(_title, string.IsNullOrWhiteSpace(_application) ? "user-reported" : _application, _severity, _environment, _description, _impact);
+            var body = new StartInvestigationBody { Question = string.IsNullOrWhiteSpace(_question) ? null : _question.Trim(), Mode = LiveAllowed && _live ? "live" : null };
+            var (investigationId, _) = Service.StartInvestigation(incident.Id, body, new Caller(Codes.Current, IsLocal));
+            Nav.NavigateTo($"/incidents/{incident.Id}?investigation={investigationId}");
+        }
+        catch (Exception err)
+        {
+            _error = Ui.Message(err);
+            _submitting = false;
+        }
+    }
+}
