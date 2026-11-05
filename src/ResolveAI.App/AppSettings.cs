@@ -35,7 +35,7 @@ public sealed class AppSettings
     {
         var env = environment ?? Environment.GetEnvironmentVariable;
         string? Trimmed(string key) => env(key)?.Trim() is { Length: > 0 } v ? v : null;
-        string? ConfigValue(string sectionName, string key)
+        string? ConfigValue(string? sectionName, string key)
         {
             foreach (var path in ConfigPaths())
             {
@@ -43,7 +43,10 @@ public sealed class AppSettings
                 try
                 {
                     using var document = JsonDocument.Parse(File.ReadAllText(path));
-                    if (document.RootElement.TryGetProperty(sectionName, out var section)
+                    var section = sectionName is null
+                        ? document.RootElement
+                        : document.RootElement.TryGetProperty(sectionName, out var nested) ? nested : default;
+                    if (section.ValueKind == JsonValueKind.Object
                         && section.TryGetProperty(key, out var value)
                         && value.ValueKind == JsonValueKind.String)
                     {
@@ -55,24 +58,7 @@ public sealed class AppSettings
             }
             return null;
         }
-        string? RootConfigValue(string key)
-        {
-            foreach (var path in ConfigPaths())
-            {
-                if (!File.Exists(path)) continue;
-                try
-                {
-                    using var document = JsonDocument.Parse(File.ReadAllText(path));
-                    if (document.RootElement.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String)
-                    {
-                        var text = value.GetString()?.Trim();
-                        if (!string.IsNullOrEmpty(text)) return text;
-                    }
-                }
-                catch (JsonException) { }
-            }
-            return null;
-        }
+        string? RootConfigValue(string key) => ConfigValue(null, key);
         string? Setting(string sectionName, string environmentKey, string configKey) => Trimmed(environmentKey) ?? ConfigValue(sectionName, configKey);
 
         var githubToken = Setting("GitHubCopilot", "GITHUB_COPILOT_TOKEN", "Token") ?? Trimmed("GITHUB_TOKEN");
