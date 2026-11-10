@@ -6,8 +6,8 @@
             <ObservedFacts Evidence="Evidence" />
         }
         <Empty Title="No investigation yet">
-            <p>Run an investigation to gather evidence, search past incidents and get ranked hypotheses.</p>
-            <Btn Class="mt-3" OnClick="OnRun">Run investigation</Btn>
+            <p>Start an investigation to collect information from the incident, compare it with past incidents, and identify the most likely cause.</p>
+            <Btn Class="mt-3" OnClick="OnRun">Start investigation</Btn>
         </Empty>
     </div>
 }
@@ -31,7 +31,9 @@ else
         @if (Inv.InsufficientEvidence || Inv.Hypotheses.Count == 0)
         {
             <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" data-testid="insufficient-evidence">
-                <strong>Insufficient evidence.</strong> The available records don't support a root-cause hypothesis. Gather more logs, metrics or change history and run the investigation again.
+                <strong>There is not enough information to identify the cause yet.</strong>
+                We could not find enough reliable details in the available records to explain what happened.
+                Add more incident details, logs, measurements, or recent changes, then start the investigation again.
             </div>
         }
         else
@@ -47,10 +49,10 @@ else
         <section class="rounded-lg border border-slate-200 bg-surface p-4">
             <div class="mb-2 flex flex-wrap items-center gap-2">
                 <SectionTile Kind="analysis" />
-                <h3 class="text-sm font-semibold text-slate-900">Inferred analysis</h3>
+                <h3 class="text-sm font-semibold text-slate-900">Investigation summary</h3>
                 <AiBadge>@(Inv.LlmMode == "live" ? $"AI-generated ({Inv.ModelName ?? "Claude"}) — not confirmed" : "Recorded analysis — not confirmed")</AiBadge>
                 <span class="ml-auto text-xs text-slate-500">
-                    @Inv.EvidenceCount evidence records · completed @Ui.FormatTime(Inv.CompletedAt) · prompt @Inv.PromptVersion
+                    @Inv.EvidenceCount information items reviewed · completed @Ui.FormatTime(Inv.CompletedAt)
                 </span>
             </div>
             <p class="text-sm text-slate-800">@Inv.Summary</p>

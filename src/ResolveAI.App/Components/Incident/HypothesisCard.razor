@@ -7,17 +7,17 @@
         <ConfidenceChip Confidence="@H.Confidence" />
         @if (H.Speculative)
         {
-            <span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">speculative</span>
+            <span class="rounded-sm bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">early possibility</span>
         }
     </header>
     <div class="space-y-4 p-4">
         <p class="text-sm text-slate-700">@H.Explanation</p>
 
         <div>
-            <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700">Supporting evidence</h5>
+            <h5 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700">Information supporting this</h5>
             @if (H.Evidence.Count == 0)
             {
-                <p class="text-sm text-amber-800">No supporting records in the evidence packet.</p>
+                <p class="text-sm text-amber-800">No supporting information was found yet.</p>
             }
             else
             {
@@ -26,13 +26,13 @@
                     {
                         <li @key="e.Ref">
                             <button type="button" @onclick="() => OnEvidence.InvokeAsync(e.Ref)" class="group flex w-full items-start gap-2 rounded-md p-1.5 text-left text-sm hover:bg-slate-50"
-                                    title="Show source record" data-testid="evidence-link">
+                                title="Show the information behind this explanation" data-testid="evidence-link">
                                 <EvidenceChip Kind="@e.Kind" Label="@e.Label" />
                                 @if (!string.IsNullOrEmpty(e.Timestamp))
                                 {
                                     <span class="shrink-0 tabular-nums text-xs leading-5 text-slate-500">@Ui.FormatTime(e.Timestamp, e.Kind == "hist").Replace(" UTC", "")</span>
                                 }
-                                @* A system check cites its one-line summary here; the rows are in the System checks tab. *@
+                                @* A connected-source check shows its short summary here; detailed results are in the checks tab. *@
                                 <span class="min-w-0 break-words text-slate-700 underline decoration-slate-400 decoration-dotted underline-offset-4 transition-colors group-hover:text-indigo-700 group-hover:decoration-solid">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
                             </button>
                         </li>

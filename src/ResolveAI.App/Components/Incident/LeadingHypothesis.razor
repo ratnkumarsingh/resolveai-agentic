@@ -4,19 +4,19 @@
 <section class="@Ui.Cx("overflow-hidden rounded-xl border border-l-4 bg-surface shadow-sm", H.Speculative ? "border-amber-300 border-l-amber-500" : "border-slate-200 border-l-indigo-500")" data-testid="leading-hypothesis">
     <div class="p-5">
         <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs font-semibold uppercase tracking-wide label-gradient">Leading hypothesis</span>
+            <span class="text-xs font-semibold uppercase tracking-wide label-gradient">Most likely explanation</span>
             <AiBadge>@(Inv.LlmMode == "live" ? $"AI-generated ({Inv.ModelName ?? "Claude"}) — not confirmed" : "Recorded analysis — not confirmed")</AiBadge>
             @if (!H.Speculative)
             {
                 <ConfidenceChip Confidence="@H.Confidence" />
             }
-            <span class="ml-auto text-xs text-slate-500">@Inv.EvidenceCount evidence records · @Inv.ToolCalls.Count system checks</span>
+            <span class="ml-auto text-xs text-slate-500">@Inv.EvidenceCount information items · @Inv.ToolCalls.Count checks</span>
         </div>
         <h2 class="@Ui.Cx("mt-2 font-semibold text-slate-900", H.Speculative ? "text-lg" : "text-2xl")">@H.Title</h2>
         @if (H.Speculative)
         {
             <p class="mt-2 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900" data-testid="leading-speculative">
-                <strong>Speculative:</strong> no supporting records in the evidence packet. Treat this as a starting idea, not a finding.
+                <strong>Early possibility:</strong> we did not find supporting information yet. Treat this as a starting idea, not a confirmed finding.
             </p>
         }
 
@@ -24,13 +24,13 @@
             @if (H.Evidence.Count > 0)
             {
                 <div class="min-w-0">
-                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-700">What backs it</h3>
+                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-700">Information supporting this</h3>
                     <ul class="space-y-0.5">
                         @foreach (var e in H.Evidence.Take(3))
                         {
                             <li @key="e.Ref">
                                 <button type="button" @onclick="() => OnEvidence.InvokeAsync(e.Ref)" class="group flex w-full items-start gap-2 rounded-md p-1.5 text-left text-sm hover:bg-surface"
-                                        title="Show source record" data-testid="leading-evidence">
+                                        title="Show the information behind this explanation" data-testid="leading-evidence">
                                     <EvidenceChip Kind="@e.Kind" Label="@e.Label" />
                                     <span class="min-w-0 line-clamp-2 break-words text-slate-700 underline decoration-slate-400 decoration-dotted underline-offset-4 transition-colors group-hover:text-indigo-700 group-hover:decoration-solid">@(e.Kind == "mcp" ? e.Excerpt.Split('\n')[0] : e.Excerpt)</span>
                                 </button>
@@ -49,7 +49,7 @@
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Check this first</h3>
                     <p class="mt-1 text-sm font-medium text-slate-900">@check.Step</p>
                     <p class="mt-1 text-xs text-slate-600"><strong class="font-medium">Expect:</strong> @check.ExpectedSignal</p>
-                    <p class="mt-2 text-xs text-slate-500">For an engineer to perform — nothing is executed.</p>
+                    <p class="mt-2 text-xs text-slate-500">A person should perform this check. ResolveAI will not run it.</p>
                 </div>
             }
         </div>

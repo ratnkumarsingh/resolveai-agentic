@@ -4,7 +4,7 @@
         <Spinner Class="h-5 w-5" />
         <div class="min-w-0 flex-1" role="status">
             <div class="font-semibold">Investigation in progress</div>
-            <div class="text-sm text-slate-600">@(Inv.Stage ?? "Queued")…</div>
+            <div class="text-sm text-slate-600">@(Inv.Stage ?? "Waiting to start")…</div>
         </div>
         <span class="rounded-md bg-raised px-2.5 py-1 text-xs font-medium">
             @(Inv.LlmMode == "live" ? "Live: Claude is analysing" : "Recorded mode: no model is called")
@@ -38,11 +38,11 @@
         </ol>
         <div class="min-w-0">
             <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-sky-700">
-                System checks so far <span class="font-normal normal-case">(@Inv.ToolCalls.Count, read-only)</span>
+                Checks completed so far <span class="font-normal normal-case">(@Inv.ToolCalls.Count, no changes made)</span>
             </h3>
             @if (Inv.ToolCalls.Count == 0)
             {
-                <p class="rounded-md bg-slate-50 p-3 text-sm text-slate-500">Results appear here as each system answers.</p>
+                <p class="rounded-md bg-slate-50 p-3 text-sm text-slate-500">Updates will appear here as each connected source is checked.</p>
             }
             else
             {
@@ -68,11 +68,11 @@
     // Match matches the stage text set in Investigations.Run. An unmatched stage lights no step, and its text still shows above.
     private static readonly (string Name, string Note, string Match)[] Steps =
     [
-        ("Gather evidence", "Logs, deployments, metrics and timeline", "Gathering"),
-        ("Search incident history", "Past incidents that match, chosen by code", "Searching"),
-        ("Check systems", "The same read-only checks every run", "Checking systems"),
-        ("Follow-up checks", "A few narrower questions, within a fixed limit", "follow-up|Claude is checking"),
-        ("Analyse the evidence", "Then every citation and number is validated", "Analysing"),
+        ("Collect information", "Logs, recent changes, measurements, and timeline", "Gathering"),
+        ("Compare past incidents", "Look for similar incidents and known patterns", "Searching"),
+        ("Check connected sources", "Review information without changing your systems", "Checking systems"),
+        ("Ask focused follow-up questions", "Check a few additional details when needed", "follow-up|Claude is checking"),
+        ("Review the results", "Check that the explanation matches the available information", "Analysing"),
     ];
 
     [Parameter, EditorRequired] public Investigation Inv { get; set; } = new();

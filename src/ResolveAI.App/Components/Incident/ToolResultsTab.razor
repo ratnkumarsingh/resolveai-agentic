@@ -1,17 +1,17 @@
 @* Every system check of a run, grouped by system in a fixed order. *@
 @if (Inv is null)
 {
-    <Empty Title="No investigation yet">Run an investigation to check the database, files, deploys and metrics.</Empty>
+    <Empty Title="No investigation yet">Start an investigation to review the database, files, deployments, and measurements.</Empty>
 }
 else if (Inv.ToolCalls.Count == 0)
 {
-    <Empty Title="No system checks in this run">The MCP systems were off or nothing is configured for this service. See the Systems page.</Empty>
+    <Empty Title="No connected-source checks">No connected information sources were available for this service. Check the Systems page for setup details.</Empty>
 }
 else
 {
     <div class="space-y-6" data-testid="tool-results">
         <p class="text-xs text-slate-500">
-            Raw results from each system, exactly as returned. Secrets are redacted before anything is sent to the model; the IDs (mcp:N) are what the findings cite.
+            Detailed results from each connected source. Sensitive values are hidden before anything is sent for analysis. Select a result to see the details used by the investigation.
         </p>
         @foreach (var sys in SystemStyle.Order.Where(s => Inv.ToolCalls.Any(c => c.System == s)))
         {
@@ -27,7 +27,7 @@ else
                             @mine.Count check@(mine.Count == 1 ? "" : "s") · @mine.Count(c => c.Phase == "follow_up") follow-up
                             @if (failed > 0)
                             {
-                                <text> · <span class="font-medium text-red-700">@failed failed</span></text>
+                                 <text> · <span class="font-medium text-red-700">@failed unavailable</span></text>
                             }
                         </p>
                     </div>

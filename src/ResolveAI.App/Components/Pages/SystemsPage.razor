@@ -9,10 +9,10 @@
         
         
         <div>
-            <p class="text-xs font-semibold uppercase tracking-wide label-gradient">One MCP server per system</p>
-            <h1 class="mt-1 text-2xl glow-text font-semibold tracking-tight sm:text-3xl">Systems the agent can check</h1>
+            <p class="text-xs font-semibold uppercase tracking-wide label-gradient">Connected information sources</p>
+            <h1 class="mt-1 text-2xl glow-text font-semibold tracking-tight sm:text-3xl">Systems ResolveAI can check</h1>
             <p class="mt-2 max-w-2xl text-sm text-slate-700">
-                Each system is a separate, read-only MCP server. There is no tool that runs arbitrary SQL or commands, and nothing here can change a system.
+                ResolveAI can review information from these systems without changing them. It only uses the checks shown here; it cannot run arbitrary commands or modify your systems.
             </p>
             <div class="mt-4 flex flex-wrap gap-2">
                 @foreach (var s in SystemStyle.Order)
@@ -37,7 +37,7 @@
     @if (!_systems.Enabled)
     {
         <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-            MCP systems are turned off on this server (MCP_ENABLED=false). Investigations use the demo dataset only.
+            Connected system checks are turned off here. Investigations are using the built-in demonstration data instead.
         </div>
     }
 
@@ -79,7 +79,7 @@
                             </div>
                         }
                         <p class="mt-auto pt-1 text-[11px] text-slate-400">
-                            @st.Tools.Count read-only tool@(st.Tools.Count == 1 ? "" : "s") · checked @Ui.FormatTime(st.CheckedAt, true)
+                            @st.Tools.Count check@(st.Tools.Count == 1 ? "" : "s") available · checked @Ui.FormatTime(st.CheckedAt, true)
                         </p>
                     </div>
                 </article>
@@ -113,9 +113,9 @@
 @code {
     private static readonly (int N, string Title, string Body)[] Steps =
     [
-        (1, "Baseline checks", "ResolveAI always runs the same read-only checks for the incident's service and time window."),
-        (2, "Follow-up checks", "In live mode Claude may ask a few more narrow questions, within a fixed limit."),
-        (3, "Analysis", "Every result becomes evidence (mcp:N). Findings must cite it, and numbers are checked against it."),
+        (1, "Initial checks", "ResolveAI reviews the same basic information for the affected service and time period."),
+        (2, "Focused follow-up checks", "When enabled, the assistant can ask a few targeted questions to learn more."),
+        (3, "Review", "The results are compared with the incident details before an explanation is shown."),
     ];
 
     private SystemsResponse _systems = new() { Enabled = true };
