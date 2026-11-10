@@ -18,7 +18,10 @@ else if (Inv.Status is "queued" or "running")
 else if (Inv.Status == "failed")
 {
     <div class="space-y-4">
-        <ErrorBox Message="@(Inv.ErrorMessage ?? "The investigation failed.")" OnRetry="OnRun" />
+        @if (!HasUsefulObservations)
+        {
+            <ErrorBox Message="@FriendlyInvestigationError" OnRetry="OnRun" />
+        }
         @if (Evidence is not null)
         {
             <ObservedFacts Evidence="Evidence" />
@@ -112,4 +115,21 @@ else
     [Parameter] public EventCallback OnRun { get; set; }
     [Parameter] public EventCallback OnOpenRca { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
+
+    private bool HasUsefulObservations => Evidence is not null
+        && (Evidence.Logs.Count > 0
+            || Evidence.ErrorSignals.Count > 0
+            || Evidence.Deployments.Count > 0
+            || Evidence.Metrics.Count > 0);
+
+    private string FriendlyInvestigationError => Inv?.ErrorMessage switch
+    {
+        null or "" => "We couldn't find a reliable match in the available incident data. Add more details, logs, metrics, or recent changes, then try the investigation again.",
+        var message when message.Contains("did not match the expected format", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("could not be parsed", StringComparison.OrdinalIgnoreCase)
+            => "We couldn't turn the analysis into a reliable result for this incident. Please add more incident details or supporting records, then try again.",
+        var message when message.Contains("not enough information", StringComparison.OrdinalIgnoreCase)
+            => "There isn't enough matching information in the available records yet. Add more incident details, logs, metrics, or recent changes, then try again.",
+        _ => Inv.ErrorMessage!
+    };
 }

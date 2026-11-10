@@ -10,3 +10,10 @@ window.resolveai = {
     document.getElementById(id)?.removeAttribute("open");
   },
 };
+
+document.addEventListener("click", event => {
+  const menu = document.getElementById("application-menu");
+  if (menu?.hasAttribute("open") && !menu.contains(event.target)) {
+    menu.removeAttribute("open");
+  }
+});

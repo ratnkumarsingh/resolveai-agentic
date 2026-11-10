@@ -16,9 +16,9 @@
             <p class="mt-2 text-sm text-slate-600">
                 Start investigations for @_pendingBatchCount incident@( _pendingBatchCount == 1 ? "" : "s") in the current queue view in parallel?
             </p>
-            <div class="mt-5 flex justify-end gap-2">
+            <div class="mt-5 flex justify-end gap-2" style="display:flex;justify-content:flex-end;gap:.5rem;">
                 <button type="button" class="btn-secondary rounded-md px-3 py-1.5 text-sm" @onclick="CancelInvestigateAll" data-testid="cancel-investigate-all">Cancel</button>
-                <button type="button" class="btn-primary rounded-md px-3 py-1.5 text-sm" @onclick="StartInvestigateAll" data-testid="confirm-investigate-all">Investigate all</button>
+                <button type="button" class="btn-primary rounded-md px-3 py-1.5 text-sm" @onclick="StartInvestigateAll" data-testid="confirm-investigate-all">Investigate All</button>
             </div>
         </div>
     </div>

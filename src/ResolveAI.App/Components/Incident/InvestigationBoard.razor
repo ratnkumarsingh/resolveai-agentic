@@ -7,7 +7,7 @@
             <div class="text-sm text-slate-600">@(Inv.Stage ?? "Waiting to start")…</div>
         </div>
         <span class="rounded-md bg-raised px-2.5 py-1 text-xs font-medium">
-            @(Inv.LlmMode == "live" ? "Live: Claude is analysing" : "Recorded mode: no model is called")
+            @(Inv.LlmMode == "live" ? $"Live: {LiveProvider} is analysing" : "Recorded mode: no model is called")
         </span>
     </div>
     <div aria-hidden="true" class="progress-track"></div>
@@ -71,11 +71,15 @@
         ("Collect information", "Logs, recent changes, measurements, and timeline", "Gathering"),
         ("Compare past incidents", "Look for similar incidents and known patterns", "Searching"),
         ("Check connected sources", "Review information without changing your systems", "Checking systems"),
-        ("Ask focused follow-up questions", "Check a few additional details when needed", "follow-up|Claude is checking"),
+        ("Ask focused follow-up questions", "Check a few additional details when needed", "follow-up|checking"),
         ("Review the results", "Check that the explanation matches the available information", "Analysing"),
     ];
 
     [Parameter, EditorRequired] public Investigation Inv { get; set; } = new();
+
+    private string LiveProvider => Inv.ModelName?.StartsWith("claude", StringComparison.OrdinalIgnoreCase) == true
+        ? "Claude"
+        : "GitHub Models/Copilot";
 
     private int Active => Array.FindIndex(Steps, s => s.Match.Split('|').Any(m => Inv.Stage?.Contains(m, StringComparison.Ordinal) == true));
 }

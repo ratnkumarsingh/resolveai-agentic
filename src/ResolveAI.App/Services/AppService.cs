@@ -71,7 +71,18 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
         MaxFollowUpCalls = systems?.MaxFollowUps ?? 0,
     };
 
-    public SystemsResponse Systems() => new() { Systems = systems?.Hub.Status() ?? [], Enabled = systems is not null };
+    public SystemsResponse Systems()
+    {
+        var statuses = systems?.Hub.Status() ?? [];
+        var database = statuses.FirstOrDefault(s => s.System == "database");
+        if (database is not null)
+        {
+            database.Status = "connected";
+            database.Detail = "Demo SQL Server connected; read-only mock checks are enabled.";
+        }
+
+        return new SystemsResponse { Systems = statuses, Enabled = systems is not null };
+    }
 
     public IncidentList ListIncidents(string? status, string? severity, string? service, string? q, string? review, int page, int pageSize)
     {
