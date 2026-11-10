@@ -19,7 +19,7 @@ public sealed class AppSettings
     public string CopilotModel { get; init; } = "openai/gpt-4.1-mini";
     /// <summary>With an API key set, a run can opt into live Claude by sending this code.</summary>
     public string? LiveAccessCode { get; init; }
-    public int LiveDailyLimit { get; init; } = 20;
+    public int LiveDailyLimit { get; init; } = 100;
     public bool DemoMode { get; init; } = true;
     public bool DemoResetAnyIp { get; init; }
     public string DbPath { get; init; } = ":memory:";
@@ -79,7 +79,7 @@ public sealed class AppSettings
             CopilotModel = Setting("GitHubCopilot", "GITHUB_COPILOT_MODEL", "Model") ?? "openai/gpt-4.1-mini",
             ClaudeModel = Setting("Claude", "CLAUDE_MODEL", "Model") ?? "claude-opus-5-5",
             LiveAccessCode = Trimmed("LIVE_ACCESS_CODE"),
-            LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 20,
+            LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 100,
             DemoMode = (env("DEMO_MODE") ?? "true") == "true",
             DemoResetAnyIp = env("DEMO_RESET_ANY_IP") == "true",
             DbPath = dbPath == ":memory:" ? ":memory:" : Path.GetFullPath(dbPath ?? "data/resolveai.db", McpConfig.RepoRoot()),
