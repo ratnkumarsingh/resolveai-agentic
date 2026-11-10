@@ -60,7 +60,7 @@ public class DataTests
     public void Migrations_keep_their_filenames_so_an_existing_database_is_not_migrated_twice()
     {
         using var db = new Db(":memory:");
-        Assert.Equal(["001_init.sql", "002_trace_review.sql", "003_tool_calls.sql"], db.All<string>("SELECT name FROM _migrations ORDER BY name"));
+        Assert.Equal(["001_init.sql", "002_trace_review.sql", "003_tool_calls.sql", "004_remove_duplicate_invoice_incidents.sql"], db.All<string>("SELECT name FROM _migrations ORDER BY name"));
     }
 
     [Fact]

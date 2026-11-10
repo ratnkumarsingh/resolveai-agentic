@@ -30,7 +30,12 @@ public static class Packet
     {
         var (text, redactions) = Sanitizer.Sanitize($"{(call.Ok ? "" : "CHECK FAILED: ")}{call.Summary}{(call.Rows.Count > 0 ? $"\n{CompactRows(call.Rows)}" : "")}");
         var excerpt = Js.Clip(text, MaxToolExcerpt);
-        var args = string.Join(", ", call.Args.Select(kv => $"{kv.Key}={Js.Str(kv.Value)}"));
+        var args = string.Join(", ", call.Args.Select(kv =>
+        {
+            var (arg, count) = Sanitizer.Sanitize(Js.Str(kv.Value));
+            redactions += count;
+            return $"{kv.Key}={arg}";
+        }));
         return (new PacketItem { Id = call.Ref, Type = "tool_result", Timestamp = null, Source = $"{call.System}: {call.Tool}({args})", Excerpt = excerpt }, redactions);
     }
 

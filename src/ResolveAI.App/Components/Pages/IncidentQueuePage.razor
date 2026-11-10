@@ -1,8 +1,26 @@
 @page "/"
 @inject AppService Service
 @inject NavigationManager Nav
+@inject AccessCodeStore Codes
+@implements IDisposable
 
 <PageTitle>ResolveAI</PageTitle>
+
+@if (_confirmBatch)
+{
+    <div class="investigate-modal-overlay" role="presentation">
+        <div class="investigate-modal-panel" role="dialog" aria-modal="true" aria-labelledby="investigate-all-title">
+            <h2 id="investigate-all-title" class="text-lg font-semibold">@(NoFilters ? "Investigate all incidents?" : "Investigate filtered incidents?")</h2>
+            <p class="mt-2 text-sm text-slate-600">
+                Start investigations for @_pendingBatchCount incident@( _pendingBatchCount == 1 ? "" : "s") in the current queue view in parallel?
+            </p>
+            <div class="mt-5 flex justify-end gap-2">
+                <button type="button" class="btn-secondary rounded-md px-3 py-1.5 text-sm" @onclick="CancelInvestigateAll" data-testid="cancel-investigate-all">Cancel</button>
+                <button type="button" class="btn-primary rounded-md px-3 py-1.5 text-sm" @onclick="StartInvestigateAll" data-testid="confirm-investigate-all">Investigate all</button>
+            </div>
+        </div>
+    </div>
+}
 
 <div class="page-enter space-y-5">
     <QueueHero Stats="_stats" Spotlight="_spotlight" Config="_config" OnTile="SelectTile"
@@ -16,6 +34,14 @@
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
+            <button type="button" @onclick="RequestInvestigateAll" disabled="@(_list is null || _list.Total == 0 || BatchRunning)" data-testid="investigate-all"
+                    class="btn-primary inline-flex items-center gap-2 rounded-md px-3 py-1 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60">
+                @if (BatchRunning)
+                {
+                    <Spinner Class="h-3.5 w-3.5" />
+                }
+                Investigate all
+            </button>
             <button type="button" aria-pressed="@Ui.Aria(_review == "pending")" @onclick="ToggleNeedsReview" data-testid="needs-review"
                     class="@Ui.Cx("rounded-md border px-3 py-1 text-sm transition-colors", _review == "pending" ? "border-amber-400 bg-amber-100 font-medium text-amber-900" : "border-slate-300 bg-surface text-slate-600 hover:bg-slate-50")">
                 Needs review
@@ -50,6 +76,10 @@
     {
         <ErrorBox Message="@_error" OnRetry="Load" />
     }
+    @if (_batchError is not null)
+    {
+        <ErrorBox Message="@_batchError" />
+    }
     @if (_list is { Items.Count: 0 })
     {
         <Empty Title="@(_review == "pending" ? "Nothing waiting for review" : "No incidents match these filters")">
@@ -63,8 +93,11 @@
             @foreach (var i in _list.Items)
             {
                 var review = Ui.Review(i.ReviewState);
-                <li @key="i.Id" data-testid="incident-card" @onclick="() => Nav.NavigateTo(IncidentUrl(i))"
-                    class="@Ui.Cx("flex cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-surface shadow-sm transition hover:-translate-y-px hover:border-slate-300 hover:shadow-md motion-reduce:transform-none", Ui.SeverityGlow(i.Severity))">
+                var batch = BatchState(i.Id);
+                var clickable = batch is null || batch.Status is "completed" or "failed";
+                <li @key="i.Id" data-testid="incident-card" @onclick="() => OpenIncident(i)"
+                    aria-disabled="@Ui.Aria(!clickable)"
+                    class="@Ui.Cx("flex overflow-hidden rounded-lg border border-slate-200 bg-surface shadow-sm transition", clickable ? "cursor-pointer hover:-translate-y-px hover:border-slate-300 hover:shadow-md motion-reduce:transform-none" : "cursor-not-allowed opacity-75", Ui.SeverityGlow(i.Severity))">
                     <div aria-hidden="true" class="shrink-0 pl-4 pt-4">
                         <span class="@Ui.Cx("gloss grid h-10 w-10 place-items-center rounded-lg text-white", Ui.SeverityTile(i.Severity))">
                             <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3zM12 10v4M12 17.5v.01" /></svg>
@@ -83,11 +116,26 @@
                         </div>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
                             <span class="@Ui.Cx("whitespace-nowrap rounded-sm px-1.5 py-0.5 font-medium", review.Class)" title="@review.Title">@review.Label</span>
+                            @if (batch is not null)
+                            {
+                                <span class="inline-flex items-center gap-1 font-medium @(batch.Status == "completed" ? "text-emerald-700" : batch.Status == "failed" ? "text-red-700" : "text-blue-700")" data-testid="batch-status">
+                                    @if (batch.Status is "queued" or "running")
+                                    {
+                                        <Spinner Class="h-3.5 w-3.5" />
+                                        <span>@(batch.Status == "queued" ? "Queued" : "Investigating…")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@(batch.Status == "completed" ? "Investigation complete" : "Investigation failed")</span>
+                                    }
+                                </span>
+                            }
                             <span class="whitespace-nowrap" title="Started">@Ui.FormatTime(i.StartedAt, true)</span>
                             <span class="whitespace-nowrap font-medium" title="Age">@Ui.Age(i.StartedAt)</span>
-                            <a href="@IncidentUrl(i)" @onclick:stopPropagation="true"
+                            <a href="@(clickable ? IncidentUrl(i) : null)" @onclick="(e) => OpenIncident(i, e)" @onclick:stopPropagation="true"
+                               aria-disabled="@Ui.Aria(!clickable)" tabindex="@(clickable ? 0 : -1)"
                                class="btn-secondary inline-block whitespace-nowrap rounded-md px-3 py-1 font-medium">
-                                Open incident
+                                @(clickable ? "Open incident" : "Investigation running…")
                             </a>
                         </div>
                     </div>
@@ -95,6 +143,7 @@
             }
         </ul>
     }
+
 </div>
 
 @code {
@@ -107,11 +156,18 @@
     private string? _review;
     private IncidentList? _list;
     private string? _error;
+    private string? _batchError;
     private AppConfig _config = new();
     private QueueHero.QueueStats _stats = new(0, 0, 0, 0);
     private IncidentListItem? _spotlight;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, BatchIncident> _batch = new();
+    private Timer? _batchPoll;
+    private bool _confirmBatch;
+    private int _pendingBatchCount;
+    [CascadingParameter(Name = "IsLocal")] private bool IsLocal { get; set; }
 
     private bool NoFilters => _q.Length == 0 && _severity.Length == 0 && _status.Length == 0 && _service.Length == 0 && _review is null;
+    private bool BatchRunning => _batch.Values.Any(x => x.Status is "queued" or "running");
     private static string IncidentUrl(IncidentListItem i) => $"/incidents/{i.Key}";
 
     protected override void OnInitialized() => Load();
@@ -160,6 +216,8 @@
 
     private void Load()
     {
+        _confirmBatch = false;
+        _pendingBatchCount = 0;
         try
         {
             LoadOverview();
@@ -171,4 +229,117 @@
             _error = Ui.Message(err);
         }
     }
+
+    private BatchIncident? BatchState(string incidentId) => _batch.GetValueOrDefault(incidentId);
+
+    private void OpenIncident(IncidentListItem incident, MouseEventArgs? e = null)
+    {
+        if (BatchState(incident.Id)?.Status is "queued" or "running") return;
+        Nav.NavigateTo(IncidentUrl(incident));
+    }
+
+    private void RequestInvestigateAll()
+    {
+        Console.WriteLine($"[InvestigateAll] clicked. Filters: q='{_q}', severity='{_severity}', status='{_status}', service='{_service}', review='{_review ?? "none"}'");
+        if (BatchRunning) return;
+        try
+        {
+            var incidents = GetFilteredIncidents();
+            _pendingBatchCount = incidents.Count;
+            Console.WriteLine($"[InvestigateAll] matching incidents: {_pendingBatchCount}");
+            _batchError = _pendingBatchCount == 0 ? "No incidents match the current filters." : null;
+            _confirmBatch = _pendingBatchCount > 0;
+        }
+        catch (Exception err)
+        {
+            Console.WriteLine($"[InvestigateAll] failed: {err}");
+            _confirmBatch = false;
+            _batchError = Ui.Message(err);
+        }
+    }
+
+    private List<IncidentListItem> GetFilteredIncidents()
+    {
+        var first = Service.ListIncidents(_status, _severity, _service, _q, _review, 1, 100);
+        var all = first.Items;
+        for (var page = 2; all.Count < first.Total; page++)
+        {
+            var next = Service.ListIncidents(_status, _severity, _service, _q, _review, page, 100);
+            if (next.Items.Count == 0) break;
+            all.AddRange(next.Items);
+        }
+        return all;
+    }
+
+    private void CancelInvestigateAll() => _confirmBatch = false;
+
+    private void StartInvestigateAll()
+    {
+        _confirmBatch = false;
+        _batchError = null;
+        try
+        {
+            var incidents = GetFilteredIncidents();
+            if (incidents.Count == 0)
+            {
+                _batchError = "No incidents match the current filters.";
+                return;
+            }
+
+            var caller = new Caller(Codes.Current, IsLocal);
+            foreach (var incident in incidents)
+            {
+                _batch[incident.Id] = new BatchIncident(incident.Id, "queued", null);
+                QueueIncident(incident, caller);
+            }
+
+            StartBatchPolling();
+        }
+        catch (Exception err)
+        {
+            _batchError = Ui.Message(err);
+        }
+    }
+
+    private void QueueIncident(IncidentListItem incident, Caller caller)
+    {
+        try
+        {
+            var (id, status) = Service.StartInvestigation(incident.Id, new StartInvestigationBody(), caller);
+            _batch[incident.Id] = new BatchIncident(incident.Id, status, id);
+        }
+        catch (Exception err)
+        {
+            _batch[incident.Id] = new BatchIncident(incident.Id, "failed", null, Ui.Message(err));
+        }
+    }
+
+    private void StartBatchPolling() => _batchPoll ??= new Timer(_ => InvokeAsync(PollBatch), null, 500, 500);
+
+    private void PollBatch()
+    {
+        foreach (var item in _batch.Values.Where(x => x.Status is "queued" or "running").ToList())
+        {
+            if (item.InvestigationId is null) continue;
+            try
+            {
+                var status = Service.Investigation(item.InvestigationId).Status;
+                _batch[item.IncidentId] = item with { Status = status };
+            }
+            catch
+            {
+                _batch[item.IncidentId] = item with { Status = "failed" };
+            }
+        }
+        if (!BatchRunning)
+        {
+            _batchPoll?.Dispose();
+            _batchPoll = null;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => _batchPoll?.Dispose();
+
+    private sealed record BatchIncident(string IncidentId, string Status, string? InvestigationId, string? Error = null);
 }

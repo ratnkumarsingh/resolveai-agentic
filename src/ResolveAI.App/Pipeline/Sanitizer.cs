@@ -27,6 +27,15 @@ public static class Sanitizer
         (new Regex(@"\b(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|client[_-]?secret)(\s*[=:]\s*)(""[^""]*""|'[^']*'|[^\s,;&@]+)", EcmaI), "$1$2[REDACTED]"),
         // Email addresses
         (new Regex(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", Ecma), "[EMAIL]"),
+        // Common PII fields in structured log output. Keep the field name so the model retains context.
+        (new Regex(@"\b(email|e-mail|phone|mobile|telephone|ssn|social[_ -]?security(?:[_ -]?number)?|customer[_ -]?name|full[_ -]?name|street[_ -]?address|postal[_ -]?code)(\s*[=:]\s*)(""[^""]*""|'[^']*'|[^\s,;&]+)", EcmaI), "$1$2[REDACTED_PII]"),
+        // US Social Security numbers and phone numbers.
+        (new Regex(@"(?<!\d)\d{3}[- ]\d{2}[- ]\d{4}(?!\d)", Ecma), "[SSN]"),
+        (new Regex(@"(?<!\d)(?:\+?1[ .-]?)?(?:\(\d{3}\)|\d{3})[ .-]\d{3}[ .-]\d{4}(?!\d)", Ecma), "[PHONE]"),
+        // IPv4 addresses can identify private infrastructure or a person at the edge.
+        (new Regex(@"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])", Ecma), "[IP_ADDRESS]"),
+        // JWTs are frequently logged in request metadata and do not have a fixed prefix.
+        (new Regex(@"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", Ecma), "[REDACTED_TOKEN]"),
         // Card-like numbers (13–19 digits, optional separators)
         (new Regex(@"\b(?:\d[ -]?){12,18}\d\b", Ecma), "[CARD]"),
     ];

@@ -250,6 +250,35 @@ body::after {
   border-bottom: 1px solid rgb(255 255 255 / 0.1);
 }
 
+.investigate-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.55);
+}
+
+.investigate-modal-panel {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  z-index: 100000 !important;
+  width: min(32rem, calc(100vw - 2rem));
+  transform: translate(-50%, -50%) !important;
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  padding: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.35);
+}
+
 /* Glass. Cards are translucent over the page's glows, with a bright top edge drawn as a background, so it needs no extra element.
    Buttons and chips also use the surface colour, so this names the elements that are panels.
 

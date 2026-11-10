@@ -15,6 +15,34 @@ public sealed class SmokeTests(AppFixture app)
     }
 
     [Fact]
+    public async Task Investigate_all_uses_the_active_filter_and_requires_confirmation()
+    {
+        Assert.True((await app.Http.PostAsync("/api/demo/reset", null)).IsSuccessStatusCode);
+        var page = await NewPage();
+        await page.GotoAsync("/");
+
+        await page.GetByLabel("Severity").SelectOptionAsync("SEV-1");
+        var filtered = page.GetByTestId("incident-card");
+        var filteredCount = await filtered.CountAsync();
+        Assert.True(filteredCount > 0);
+
+        await page.GetByTestId("investigate-all").ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToContainTextAsync(new Regex("Start investigations for [1-9][0-9]* incidents?"));
+        await page.GetByTestId("cancel-investigate-all").ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToHaveCountAsync(0);
+        await Expect(page.GetByTestId("batch-status")).ToHaveCountAsync(0);
+
+        await page.GetByTestId("investigate-all").ClickAsync();
+        await page.GetByTestId("confirm-investigate-all").ClickAsync();
+        await Expect(page.GetByTestId("batch-status").First).ToBeVisibleAsync();
+        var batchCount = await page.GetByTestId("batch-status").CountAsync();
+        Assert.True(batchCount > 0);
+        await Expect(page.GetByTestId("batch-status").First).ToContainTextAsync("Investigation complete", new() { Timeout = 20_000 });
+        await Expect(page.GetByTestId("batch-status")).ToHaveCountAsync(batchCount);
+        await Expect(page.GetByTestId("incident-card").First.GetByRole(AriaRole.Link, new() { Name = "Open incident" })).ToBeVisibleAsync();
+    }
+
+    [Fact]
     public async Task Incident_to_investigation_to_evidence_to_similar_incident_to_RCA_draft()
     {
         // Start from a known dataset.
