@@ -84,7 +84,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
             : !string.IsNullOrEmpty(deps.Settings.LiveAccessCode)
                 ? $"with access code ({deps.Settings.CopilotModel}, {deps.Settings.LiveDailyLimit}/day)"
                 : "off (set LIVE_ACCESS_CODE to allow it)";
-    Console.WriteLine($"ResolveAI on http://{deps.Settings.Host}:{deps.Settings.Port} — recorded mode; live Claude: {live}");
+    Console.WriteLine($"ResolveAI on http://{deps.Settings.Host}:{deps.Settings.Port} — recorded mode; live model: {live}");
 });
 
 await app.RunAsync();

@@ -30,11 +30,30 @@
             var start = Js.ParseDate(Evidence.Incident.StartedAt);
             double MinutesBefore(Deployment d) => (start - Js.ParseDate(d.DeployedAt)).TotalMinutes;
             var facts = new List<string>();
-            if (Evidence.Logs.Find(l => l.Level == "ERROR") is { } firstError) facts.Add($"First error at {Ui.FormatTime(firstError.Timestamp)}: {firstError.Message}");
-            facts.AddRange(Evidence.ErrorSignals.Take(3).Select(s => $"{s.Count}× {s.Signature} between {Ui.FormatTime(s.FirstSeen)} and {Ui.FormatTime(s.LastSeen)}"));
-            facts.AddRange(Evidence.Deployments.Where(d => MinutesBefore(d) is >= 0 and <= 120).Select(d => $"{d.ServiceName} {d.Version} deployed {Js.Num(Js.Round(MinutesBefore(d)))} min before start: {d.ChangeSummary}"));
-            facts.AddRange(Evidence.Metrics.Where(Ui.MovedSharply).Select(m => $"{m.Name} rose from {Ui.Number(m.Baseline)} to {Ui.Number(m.Peak)} {m.Unit}"));
+            if (Evidence.Logs.Find(l => l.Level == "ERROR") is { } firstError)
+            {
+                facts.Add($"A request failure was recorded at {Ui.FormatTime(firstError.Timestamp)}: {firstError.Message} (technical detail: error log from {firstError.ServiceName}).");
+            }
+
+            facts.AddRange(Evidence.ErrorSignals.Take(3).Select(s =>
+                $"The same type of error occurred {s.Count} time{(s.Count == 1 ? "" : "s")} between {Ui.FormatTime(s.FirstSeen)} and {Ui.FormatTime(s.LastSeen)} (technical signature: {s.Signature})."));
+
+            facts.AddRange(Evidence.Deployments.Where(d => MinutesBefore(d) is >= 0 and <= 120).Select(d =>
+                $"A recent change was released for {d.ServiceName} about {Js.Num(Js.Round(MinutesBefore(d)))} minute{(Js.Round(MinutesBefore(d)) == 1 ? "" : "s")} before the incident started: {d.ChangeSummary} (technical version: {d.Version})."));
+
+            facts.AddRange(Evidence.Metrics.Where(Ui.MovedSharply).Select(m =>
+                $"{FriendlyMetric(m.Name)} changed significantly, increasing from {Ui.Number(m.Baseline)} to {Ui.Number(m.Peak)} {m.Unit} (technical metric: {m.Name})."));
             return facts.Distinct().ToList();
         }
     }
+
+    private static string FriendlyMetric(string name) => name.ToLowerInvariant() switch
+    {
+        var value when value.Contains("latency") || value.Contains("p95") => "Request response time",
+        var value when value.Contains("error") || value.Contains("failure") => "Error rate",
+        var value when value.Contains("connection") || value.Contains("pool") => "Database connection usage",
+        var value when value.Contains("cpu") => "Server CPU usage",
+        var value when value.Contains("memory") => "Server memory usage",
+        _ => "A service measurement",
+    };
 }

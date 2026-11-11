@@ -17,14 +17,14 @@
             <dd>
                 @if (_config.LlmMode == "live")
                 {
-                    <text>Live — investigations call Claude (<span class="tabular-nums">@_config.Model</span>) from the server.</text>
+                    <text>Live — investigations call the configured model (<span class="tabular-nums">@_config.Model</span>) from the server.</text>
                 }
                 else
                 {
                     <text>Recorded by default — investigations replay a recorded analysis (INC-1042) or deterministic rules. No model is called.</text>
                 }
             </dd>
-            <dt class="text-slate-500">Live Claude</dt>
+            <dt class="text-slate-500">Live model</dt>
             <dd>
                 @if (_config.LiveAvailable)
                 {
@@ -32,7 +32,7 @@
                 }
                 else
                 {
-                    <text>Not available on this server (needs ANTHROPIC_API_KEY and LIVE_ACCESS_CODE).</text>
+                    <text>Not available on this server (needs a configured live provider and LIVE_ACCESS_CODE).</text>
                 }
             </dd>
         </dl>
@@ -40,7 +40,7 @@
 
     <Card Title="Access code" Icon="key">
         <p class="text-sm text-slate-600">
-            Live Claude runs cost money, so they need the access code set on the server (<span class="font-mono">LIVE_ACCESS_CODE</span>).
+            Live model runs may incur usage costs, so they need the access code set on the server (<span class="font-mono">LIVE_ACCESS_CODE</span>).
             It also allows demo reset from outside localhost. The code is kept only in this browser.
         </p>
         <form class="mt-3 flex flex-wrap items-center gap-2" @onsubmit="SaveCode" @onsubmit:preventDefault="true">

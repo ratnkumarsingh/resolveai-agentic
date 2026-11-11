@@ -57,7 +57,7 @@ else if (_detail is not null)
                             <label class="flex items-start gap-2 text-xs text-slate-600">
                                 <input type="checkbox" @bind="_live" class="mt-0.5" data-testid="use-live" />
                                 <span>
-                                    Use live Claude (@_config.LiveModel) · @Math.Max(0, _config.LiveDailyLimit - _config.LiveRunsToday) of @_config.LiveDailyLimit left today
+                                    Use live @LiveProviderLabel (@_config.LiveModel) · @Math.Max(0, _config.LiveDailyLimit - _config.LiveRunsToday) of @_config.LiveDailyLimit left today
                                     @if (_live && Codes.Current.Length == 0 && _config.LlmMode != "live")
                                     {
                                         <span class="block text-amber-700">Needs the access code — <a href="/settings" class="link link-inline">enter it in Settings</a>.</span>
@@ -194,6 +194,7 @@ else if (_detail is not null)
     private bool Collapsed => HasRun && !_detailsOpen;
     // Shown only when the server can run live on request; a server that is live by default needs no toggle.
     private bool LiveAllowed => _config.LiveAvailable && _config.LlmMode != "live";
+    private string LiveProviderLabel => _config.LiveModel?.StartsWith("claude", StringComparison.OrdinalIgnoreCase) == true ? "Claude" : "GitHub Models";
 
     protected override void OnParametersSet()
     {
