@@ -117,19 +117,15 @@
                             <div class="mt-0.5 line-clamp-1 text-sm text-slate-600">@i.ImpactSummary</div>
                         </div>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
-                            <span class="@Ui.Cx("whitespace-nowrap rounded-sm px-1.5 py-0.5 font-medium", review.Class)" title="@review.Title">@review.Label</span>
-                            @if (batch is not null)
+                            @if (i.Status is "investigating")
                             {
-                                <span class="inline-flex items-center gap-1 font-medium @(batch.Status == "completed" ? "text-emerald-700" : batch.Status == "failed" ? "text-red-700" : "text-blue-700")" data-testid="batch-status">
-                                    @if (batch.Status is "queued" or "running")
-                                    {
-                                        <Spinner Class="h-3.5 w-3.5" />
-                                        <span>@(batch.Status == "queued" ? "Queued" : "Investigating…")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>@(batch.Status == "completed" ? "Investigation complete" : "Investigation failed")</span>
-                                    }
+                                <span class="@Ui.Cx("whitespace-nowrap rounded-sm px-1.5 py-0.5 font-medium", review.Class)" title="@review.Title">@review.Label</span>
+                            }
+                            @if (batch is not null && batch.Status is "queued" or "running")
+                            {
+                                <span class="inline-flex items-center gap-1 font-medium @(batch.Status == "running" ? "text-blue-700" : "text-blue-700")" data-testid="batch-status">
+                                    <Spinner Class="h-3.5 w-3.5" />
+                                    <span>@(batch.Status == "queued" ? "Queued" : "Investigating…")</span>
                                 </span>
                             }
                             <span class="whitespace-nowrap" title="Started">@Ui.FormatTime(i.StartedAt, true)</span>
@@ -332,6 +328,8 @@
         {
             _batchPoll?.Dispose();
             _batchPoll = null;
+            Load(); // Refresh incident list after batch completes
+            _batch.Clear(); // Clear batch tracking after refreshing
         }
         InvokeAsync(StateHasChanged);
     }
