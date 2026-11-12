@@ -129,6 +129,13 @@ public static class ApiEndpoints
             return Results.Text(markdown, "text/markdown; charset=utf-8");
         });
 
+        api.MapGet("/rca-drafts/{id}/export.pdf", ([FromServices] AppService s, string id, HttpContext http) =>
+        {
+            var (fileName, content) = s.ExportRcaPdf(id);
+            http.Response.Headers.ContentDisposition = $"attachment; filename=\"{fileName}\"";
+            return Results.File(content, "application/pdf");
+        });
+
         api.MapGet("/knowledge/{id}", ([FromServices] AppService s, string id) => JsonResult(s.Knowledge(id)));
 
         api.MapPost("/demo/reset", ([FromServices] AppService s, HttpContext http) =>

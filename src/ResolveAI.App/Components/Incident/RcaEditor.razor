@@ -57,9 +57,9 @@
             <Btn OnClick="@(() => Save("reviewed"))">Save &amp; mark reviewed</Btn>
         }
         <Btn OnClick="Copy" Disabled="@Dirty">@(_copied ? "Copied" : "Copy Markdown")</Btn>
-        <a href="/api/rca-drafts/@Rca.Id/export.md" download
+        <a href="/api/rca-drafts/@Rca.Id/export.pdf" download
            class="@Ui.Cx("btn-secondary rounded-md px-3 py-1.5 text-sm font-medium", Dirty ? "pointer-events-none opacity-50" : null)">
-            Download .md
+            Download PDF
         </a>
         @if (Dirty)
         {

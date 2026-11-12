@@ -238,6 +238,13 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
         return ($"{incident.Key}-rca-v{rca.Version}.md", Rca.Markdown(rca, incident));
     }
 
+    public (string FileName, byte[] Content) ExportRcaPdf(string id)
+    {
+        var rca = GetRca(id);
+        var incident = IncidentOr404(rca.IncidentId);
+        return ($"{incident.Key}-rca-v{rca.Version}.pdf", Rca.Pdf(rca, incident));
+    }
+
     public KnowledgeBody Knowledge(string id) =>
         db.Get<KnowledgeBody>("SELECT id, title, doc_type, service_name, body FROM knowledge_documents WHERE id = @id", new { id }) ?? throw new AppError(404, "Document not found");
 
