@@ -25,7 +25,7 @@ public sealed record Caller(string? AccessCode, bool IsLocal);
 /// </summary>
 public sealed class AppService(Db db, Providers providers, Systems? systems, AppSettings settings)
 {
-    private static readonly HashSet<string> ReviewStates = ["none", "pending", "verified"];
+    private static readonly HashSet<string> ReviewStates = ["none", "pending", "verified", "active"];
 
     private ILlmProvider DefaultProvider => settings.LlmMode == "live" && providers.Live is not null ? providers.Live : providers.Recorded;
     private bool LiveAvailable => providers.Live is not null && (settings.LlmMode == "live" || !string.IsNullOrEmpty(settings.LiveAccessCode));

@@ -26,7 +26,7 @@
 
 <div class="page-enter space-y-5">
     <QueueHero Stats="_stats" Spotlight="_spotlight" Config="_config" OnTile="SelectTile"
-               Active="@NoFilters" Sev1="@(_severity == "SEV-1")" NeedsReview="@(_review == "pending")" Verified="@(_review == "verified")" />
+               Active="@(_review == "active")" Sev1="@(_severity == "SEV-1")" NeedsReview="@(_review == "pending")" Verified="@(_review == "verified")" />
 
     <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -52,7 +52,7 @@
                    class="w-64 rounded-md border border-slate-300 bg-surface px-3 py-1.5 text-sm" />
             <select aria-label="Severity" @bind="_severity" @bind:after="Load" class="@SelectClass">
                 <option value="">All severities</option>
-                @foreach (var s in new[] { "SEV-1", "SEV-2", "SEV-3", "SEV-4" })
+                @foreach (var s in _availableSeverities)
                 {
                     <option value="@s">@s</option>
                 }
@@ -63,6 +63,7 @@
                 {
                     <option value="@s">@s</option>
                 }
+                <option value="reviewed">Reviewed</option>
             </select>
             <select aria-label="Service" @bind="_service" @bind:after="Load" class="@SelectClass">
                 <option value="">All services</option>
@@ -85,7 +86,7 @@
     @if (_list is { Items.Count: 0 })
     {
         <Empty Title="@(_review == "pending" ? "Nothing waiting for review" : "No incidents match these filters")">
-            @(_review == "pending" ? "Every investigated incident has a verified root cause and a reviewed RCA." : "Clear the search or filters, or reseed the demo data from Settings.")
+            @(_review == "pending" ? "Every investigated incident has a reviewed root cause and RCA." : "Clear the search or filters, or reseed the demo data from Settings.")
         </Empty>
     }
 
@@ -152,6 +153,7 @@
     private string _service = "";
     private string? _review;
     private IncidentList? _list;
+    private List<string> _availableSeverities = [];
     private string? _error;
     private string? _batchError;
     private AppConfig _config = new();
@@ -166,6 +168,8 @@
     private bool NoFilters => _q.Length == 0 && _severity.Length == 0 && _status.Length == 0 && _service.Length == 0 && _review is null;
     private bool BatchRunning => _batch.Values.Any(x => x.Status is "queued" or "running");
     private static string IncidentUrl(IncidentListItem i) => $"/incidents/{i.Key}";
+    private string? FilterStatus => _status == "reviewed" ? null : _status;
+    private string? FilterReview => _status == "reviewed" ? "verified" : _review;
 
     protected override void OnInitialized() => Load();
 
@@ -181,6 +185,11 @@
     {
         switch (key)
         {
+            case "active":
+                _q = _severity = _status = _service = "";
+                _review = _review == "active" ? null : "active";
+                Load();
+                break;
             case "sev1":
                 _severity = _severity == "SEV-1" ? "" : "SEV-1";
                 Load();
@@ -218,13 +227,33 @@
         try
         {
             LoadOverview();
-            _list = Service.ListIncidents(_status, _severity, _service, _q, _review, 1, 25);
+            _availableSeverities = LoadAvailableSeverities();
+            _list = Service.ListIncidents(FilterStatus, _severity, _service, _q, FilterReview, 1, 25);
             _error = null;
         }
         catch (Exception err)
         {
             _error = Ui.Message(err);
         }
+    }
+
+    private List<string> LoadAvailableSeverities()
+    {
+        var first = Service.ListIncidents(FilterStatus, null, _service, _q, FilterReview, 1, 100);
+        var items = first.Items;
+        for (var page = 2; items.Count < first.Total; page++)
+        {
+            var next = Service.ListIncidents(FilterStatus, null, _service, _q, FilterReview, page, 100);
+            if (next.Items.Count == 0) break;
+            items.AddRange(next.Items);
+        }
+
+        return items
+            .Select(i => i.Severity)
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(s => s)
+            .ToList();
     }
 
     private BatchIncident? BatchState(string incidentId) => _batch.GetValueOrDefault(incidentId);
@@ -254,11 +283,11 @@
 
     private List<IncidentListItem> GetFilteredIncidents()
     {
-        var first = Service.ListIncidents(_status, _severity, _service, _q, _review, 1, 100);
+        var first = Service.ListIncidents(FilterStatus, _severity, _service, _q, FilterReview, 1, 100);
         var all = first.Items;
         for (var page = 2; all.Count < first.Total; page++)
         {
-            var next = Service.ListIncidents(_status, _severity, _service, _q, _review, page, 100);
+            var next = Service.ListIncidents(FilterStatus, _severity, _service, _q, FilterReview, page, 100);
             if (next.Items.Count == 0) break;
             all.AddRange(next.Items);
         }

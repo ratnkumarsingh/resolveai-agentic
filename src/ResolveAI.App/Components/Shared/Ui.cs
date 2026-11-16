@@ -122,8 +122,8 @@ public static class Ui
 
     public static (string Label, string Class, string Title) Review(string state) => state switch
     {
-        "pending" => ("Needs review", "bg-amber-100 text-amber-700", "AI findings exist but no one has verified the root cause and reviewed the RCA"),
-        "verified" => ("Verified", "bg-emerald-100 text-emerald-700", "Root cause verified and RCA marked reviewed by a person"),
+        "pending" => ("Needs review", "bg-amber-100 text-amber-700", "AI findings exist but no one has reviewed the root cause and RCA"),
+        "verified" => ("Reviewed", "bg-emerald-100 text-emerald-700", "Root cause reviewed and RCA marked reviewed by a person"),
         _ => ("Not investigated", "bg-slate-100 text-slate-600", "No completed investigation yet"),
     };
 

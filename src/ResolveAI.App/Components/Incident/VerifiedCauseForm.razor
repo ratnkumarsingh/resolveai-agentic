@@ -1,9 +1,9 @@
 @inject AppService Service
 
-<Card Title="Record what was verified" Icon="verify">
+<Card Title="Record what was reviewed" Icon="verify">
     <form class="space-y-3" @onsubmit="Save" @onsubmit:preventDefault="true">
         <label class="block text-sm">
-            <span class="text-slate-600">Verified root cause</span>
+            <span class="text-slate-600">Reviewed root cause</span>
             <input @bind="_cause" @bind:event="oninput" placeholder="e.g. pool.max set to 20 by v2.8.1 config change" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-1.5" />
         </label>
         <label class="block text-sm">
