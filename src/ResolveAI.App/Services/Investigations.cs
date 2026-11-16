@@ -235,11 +235,11 @@ public static class Investigations
                 var item = Packet.AddToolItem(packet, await tools.Call("follow_up", name, args, ct));
                 return $"[{item.Id}] {item.Excerpt}";
             };
-            SetStage(db, id, "running", llm.Mode == "live" ? "Claude is checking systems for missing evidence" : "Running follow-up checks (recorded)");
+            SetStage(db, id, "running", llm.Mode == "live" ? $"{llm.Model ?? "AI"} is checking systems for missing evidence" : "Running follow-up checks (recorded)");
             try
             {
                 var offered = systems.Hub.Tools().Select(t => new FollowUpTool(t.Name, t.Description, t.InputSchema)).ToList();
-                await trace.Step(llm.Mode == "live" ? "Follow-up checks (Claude)" : "Follow-up checks (recorded)",
+                await trace.Step(llm.Mode == "live" ? $"Follow-up checks ({llm.Model ?? "AI"})" : "Follow-up checks (recorded)",
                     () => WithTimeout(ct => followUp(packet, offered, call, max, ct), FollowUpTimeout, "Follow-up checks took too long and were stopped."),
                     usage =>
                     {
@@ -257,11 +257,11 @@ public static class Investigations
             SaveTrace();
         }
 
-        SetStage(db, id, "running", llm.Mode == "live" ? "Analysing evidence with Claude" : "Analysing evidence (recorded mode)");
+        SetStage(db, id, "running", llm.Mode == "live" ? $"Analysing evidence with {llm.Model ?? "AI"}" : "Analysing evidence (recorded mode)");
         LlmResult<InvestigationOutput> result;
         try
         {
-            result = await trace.Step(llm.Mode == "live" ? "Analyse with Claude" : "Analyse (recorded)",
+            result = await trace.Step(llm.Mode == "live" ? $"Analyse with {llm.Model ?? "AI"}" : "Analyse (recorded)",
                 () => WithTimeout(ct => CallWithRetry(() => llm.Investigate(packet, ct), issues), OverallTimeout, "The analysis took too long and was stopped. Try again; the incident data is unchanged."),
                 r =>
                 {
