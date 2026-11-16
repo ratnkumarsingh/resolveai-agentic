@@ -59,7 +59,7 @@
             </select>
             <select aria-label="Status" @bind="_status" @bind:after="Load" class="@SelectClass">
                 <option value="">All statuses</option>
-                @foreach (var s in new[] { "open", "investigating", "mitigated", "resolved" })
+                @foreach (var s in new[] { "open", "investigating", "mitigated", "reviewed" })
                 {
                     <option value="@s">@s</option>
                 }
@@ -214,9 +214,9 @@
     private void LoadOverview()
     {
         _config = Service.Config();
-        _stats = new(Count() - Count(status: "resolved"), Count(severity: "SEV-1"), Count(review: "pending"), Count(review: "verified"));
-        // The list is already most urgent first, with resolved incidents last.
-        _spotlight = Service.ListIncidents(null, null, null, null, "none", 1, 1).Items.FirstOrDefault(i => i.Status != "resolved")
+        _stats = new(Count() - Count(status: "reviewed"), Count(severity: "SEV-1"), Count(review: "pending"), Count(review: "verified"));
+        // The list is already most urgent first, with reviewed incidents last.
+        _spotlight = Service.ListIncidents(null, null, null, null, "none", 1, 1).Items.FirstOrDefault(i => i.Status != "reviewed")
             ?? Service.ListIncidents(null, null, null, null, "pending", 1, 1).Items.FirstOrDefault();
     }
 
