@@ -18,10 +18,10 @@ public sealed record AppDeps(Db Db, Providers Providers, Systems? Systems, AppSe
 
         ILlmProvider? live = settings.Provider switch
         {
-            "anthropic" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel, baseUrl: settings.BaseUrl),
-            "github" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel, settings.GitHubModelsBaseUrl),
-            "auto" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel, settings.GitHubModelsBaseUrl),
-            "auto" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel, baseUrl: settings.BaseUrl),
+            "anthropic" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel),
+            "github" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel),
+            "auto" when settings.GitHubToken is not null => new GitHubCopilotProvider(settings.GitHubToken, settings.CopilotModel),
+            "auto" when settings.ClaudeApiKey is not null => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel),
             _ => null,
         };
         var providers = new Providers(new RecordedProvider(), live);

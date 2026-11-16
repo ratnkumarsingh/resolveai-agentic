@@ -16,7 +16,7 @@ public sealed class AppSettings
     /// <summary>Default mode for runs that don't ask for live.</summary>
     public string LlmMode { get; init; } = "recorded";
     public string ClaudeModel { get; init; } = "claude-opus-5-5";
-    public string CopilotModel { get; init; } = "openai/gpt-4.1-mini";
+    public string CopilotModel { get; init; } = "";
     /// <summary>With an API key set, a run can opt into live Claude by sending this code.</summary>
     public string? LiveAccessCode { get; init; }
     public int LiveDailyLimit { get; init; } = 100;
@@ -76,7 +76,7 @@ public sealed class AppSettings
             Provider = provider is "github" or "anthropic" or "auto" ? provider : "auto",
             // A configured provider key enables live mode unless it is explicitly disabled.
             LlmMode = configuredMode == "recorded" ? "recorded" : (githubToken is not null || claudeApiKey is not null ? "live" : "recorded"),
-            CopilotModel = Setting("GitHubCopilot", "GITHUB_COPILOT_MODEL", "Model") ?? "openai/gpt-4.1-mini",
+            CopilotModel = Setting("GitHubCopilot", "GITHUB_COPILOT_MODEL", "Model") ?? "",
             ClaudeModel = Setting("Claude", "CLAUDE_MODEL", "Model") ?? "claude-opus-5-5",
             LiveAccessCode = Trimmed("LIVE_ACCESS_CODE"),
             LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 100,

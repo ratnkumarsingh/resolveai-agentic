@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Anthropic" Version="13.3.0" />
     <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="1.0.34" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
   </ItemGroup>
 
