@@ -41,10 +41,13 @@ builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 // Tests register their own AppDeps first; the real one (which starts child processes) is only built when nothing else was registered.
 builder.Services.AddSingleton<AppDeps>(_ => AppDeps.Create(settings).GetAwaiter().GetResult());
+builder.Services.AddHttpClient<TeamsNotifier>();
 builder.Services.AddSingleton(sp =>
 {
     var deps = sp.GetRequiredService<AppDeps>();
-    return new AppService(deps.Db, deps.Providers, deps.Systems, deps.Settings);
+    var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var notifier = new TeamsNotifier(httpFactory.CreateClient(), deps.Settings.TeamsWebhookUrl);
+    return new AppService(deps.Db, deps.Providers, deps.Systems, deps.Settings, notifier);
 });
 builder.Services.AddScoped<AccessCodeStore>();
 

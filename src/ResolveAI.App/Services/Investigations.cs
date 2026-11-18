@@ -39,7 +39,7 @@ public static class Investigations
     private static readonly TimeSpan FollowUpTimeout = TimeSpan.FromSeconds(120);
 
     /// <summary>Creates a queued investigation and runs it in the background. Returns its ID immediately.</summary>
-    public static string Start(Db db, ILlmProvider llm, Systems? systems, Incident incident, string? question)
+    public static string Start(Db db, ILlmProvider llm, Systems? systems, Incident incident, string? question, TeamsNotifier? notifier = null)
     {
         var id = Guid.NewGuid().ToString();
         db.Run(
@@ -53,9 +53,35 @@ public static class Investigations
             try
             {
                 await Run(db, llm, systems, id, incident, question);
+                if (notifier?.Enabled != true)
+                {
+                    Console.WriteLine($"teams notification skipped for investigation {id}: webhook is not configured");
+                    return;
+                }
+                try
+                {
+                    var completed = Get(db, id);
+                    if (completed is null)
+                    {
+                        Console.Error.WriteLine($"teams notification skipped for investigation {id}: run record not found");
+                        return;
+                    }
+                    if (completed.Status != "completed")
+                    {
+                        Console.WriteLine($"teams notification skipped for investigation {id}: status is {completed.Status}");
+                        return;
+                    }
+                    await notifier.NotifyInvestigationCompleted(incident, completed);
+                    Console.WriteLine($"teams notification sent for investigation {id}");
+                }
+                catch (Exception err)
+                {
+                    Console.Error.WriteLine($"teams notification failed for investigation {id}: {err.Message}");
+                }
             }
             catch (Exception err)
             {
+                Console.Error.WriteLine($"teams notification skipped for investigation {id}: run failed before completion");
                 Fail(db, id, err);
             }
         });

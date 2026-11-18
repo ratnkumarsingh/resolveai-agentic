@@ -46,7 +46,8 @@ public sealed class GitHubCopilotProvider : ILlmProvider
             var result = await session.SendAndWaitAsync<T>(prompt, Json.Options, cancellationToken: ct);
 #pragma warning restore GHCP001
             validate(result);
-            return new LlmResult<T>(result, _model);
+            var modelName = string.IsNullOrWhiteSpace(_model) ? "Copilot default" : _model;
+            return new LlmResult<T>(result, modelName);
         }
         catch (LlmError)
         {

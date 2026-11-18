@@ -23,7 +23,7 @@ public sealed record Caller(string? AccessCode, bool IsLocal);
 /// Everything the app does. The HTTP routes and the Blazor components both call this, so the access code, the daily live
 /// limit, input limits and ownership checks can't be bypassed from either side.
 /// </summary>
-public sealed class AppService(Db db, Providers providers, Systems? systems, AppSettings settings)
+public sealed class AppService(Db db, Providers providers, Systems? systems, AppSettings settings, TeamsNotifier? notifier = null)
 {
     private static readonly HashSet<string> ReviewStates = ["none", "pending", "verified", "active"];
 
@@ -169,7 +169,7 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
         if (running is not null) return (running, "running");
         var llm = ProviderFor(caller, body.Mode ?? DefaultProvider.Mode);
         var question = string.IsNullOrWhiteSpace(body.Question) ? null : body.Question.Trim();
-        return (Investigations.Start(db, llm, systems, incident, question), "queued");
+        return (Investigations.Start(db, llm, systems, incident, question, notifier), "queued");
     }
 
     public Investigation Investigation(string id) => Investigations.Get(db, id) ?? throw new AppError(404, "Investigation not found");

@@ -17,6 +17,7 @@ public sealed class AppSettings
     public string LlmMode { get; init; } = "recorded";
     public string ClaudeModel { get; init; } = "claude-opus-5-5";
     public string CopilotModel { get; init; } = "";
+    public string? TeamsWebhookUrl { get; init; }
     /// <summary>With an API key set, a run can opt into live Claude by sending this code.</summary>
     public string? LiveAccessCode { get; init; }
     public int LiveDailyLimit { get; init; } = 100;
@@ -78,6 +79,7 @@ public sealed class AppSettings
             LlmMode = configuredMode == "recorded" ? "recorded" : (githubToken is not null || claudeApiKey is not null ? "live" : "recorded"),
             CopilotModel = Setting("GitHubCopilot", "GITHUB_COPILOT_MODEL", "Model") ?? "",
             ClaudeModel = Setting("Claude", "CLAUDE_MODEL", "Model") ?? "claude-opus-5-5",
+            TeamsWebhookUrl = Trimmed("TEAMS_WEBHOOK_URL") ?? ConfigValue("Notifications", "TeamsWebhookUrl"),
             LiveAccessCode = Trimmed("LIVE_ACCESS_CODE"),
             LiveDailyLimit = int.TryParse(Trimmed("LIVE_DAILY_LIMIT"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit) && limit >= 0 ? limit : 100,
             DemoMode = (env("DEMO_MODE") ?? "true") == "true",
