@@ -19,7 +19,7 @@
             <select value="@Current?.Id" @onchange="e => _selected = e.Value?.ToString()" class="ml-auto rounded-md border border-slate-300 px-2 py-1.5 text-sm" aria-label="RCA version">
                 @foreach (var d in Drafts)
                 {
-                    <option value="@d.Id">Version @d.Version (@d.Status)</option>
+                    <option value="@d.Id">Version @d.Version (@Ui.StatusLabel(d.Status))</option>
                 }
             </select>
         }

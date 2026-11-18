@@ -79,8 +79,9 @@ public static class Ui
     {
         "open" => "bg-red-100 text-red-700",
         "investigating" => "bg-amber-100 text-amber-700",
+        "needs_review" => "bg-amber-100 text-amber-800",
         "mitigated" => "bg-sky-100 text-sky-700",
-        "resolved" => "bg-emerald-100 text-emerald-700",
+        "reviewed" or "resolved" => "bg-emerald-100 text-emerald-700",
         _ => "bg-slate-100 text-slate-700",
     };
 
@@ -88,10 +89,19 @@ public static class Ui
     {
         "open" => "bg-red-400",
         "investigating" => "bg-amber-400",
+        "needs_review" => "bg-amber-500",
         "mitigated" => "bg-sky-400",
-        "resolved" => "bg-emerald-400",
+        "reviewed" or "resolved" => "bg-emerald-400",
         _ => "bg-slate-400",
     };
+
+    public static string StatusLabel(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status)) return "—";
+        if (string.Equals(status, "resolved", StringComparison.OrdinalIgnoreCase)) return "Reviewed";
+        var normalized = status.Replace('_', ' ').Trim();
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(normalized.ToLowerInvariant());
+    }
 
     public static string Confidence(string confidence) => confidence switch
     {

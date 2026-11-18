@@ -129,7 +129,7 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
             Title = Required("title", title, 200),
             ServiceName = Required("service name", serviceName, 100),
             Severity = severity,
-            Status = "investigating",
+            Status = "open",
             Environment = Required("environment", environment, 100),
             StartedAt = now,
             DetectedAt = now,
@@ -169,6 +169,7 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
         if (running is not null) return (running, "running");
         var llm = ProviderFor(caller, body.Mode ?? DefaultProvider.Mode);
         var question = string.IsNullOrWhiteSpace(body.Question) ? null : body.Question.Trim();
+        db.Run("UPDATE incidents SET status = 'investigating' WHERE id = @id", new { id = incident.Id });
         return (Investigations.Start(db, llm, systems, incident, question, notifier), "queued");
     }
 
@@ -228,7 +229,12 @@ public sealed class AppService(Db db, Providers providers, Systems? systems, App
         Items("resolution_steps", patch.ResolutionSteps);
         Items("prevention_actions", patch.PreventionActions);
         if (patch.Status is not (null or "draft" or "reviewed")) throw new AppError(400, "Invalid request: status must be draft or reviewed.");
-        return Rca.Patch(db, id, patch) ?? throw new AppError(404, "RCA draft not found");
+        var draft = Rca.Patch(db, id, patch) ?? throw new AppError(404, "RCA draft not found");
+        if (string.Equals(patch.Status, "reviewed", StringComparison.OrdinalIgnoreCase))
+        {
+            db.Run("UPDATE incidents SET status = 'reviewed' WHERE id = @id", new { id = draft.IncidentId });
+        }
+        return draft;
     }
 
     public (string FileName, string Markdown) ExportRca(string id)

@@ -42,6 +42,9 @@ public sealed record AppDeps(Db Db, Providers Providers, Systems? Systems, AppSe
             }
         }
 
+        // Keep status and review flow in sync: open incidents should not retain previously generated RCA drafts.
+        db.Run("DELETE FROM rca_drafts WHERE incident_id IN (SELECT id FROM incidents WHERE LOWER(status) = 'open')");
+
         // Investigations interrupted by a restart can't resume; mark them failed so the UI isn't stuck polling.
         db.Run("UPDATE investigations SET status = 'failed', stage = NULL, error_message = 'Interrupted by a server restart. Run the investigation again.' WHERE status IN ('queued', 'running')");
 

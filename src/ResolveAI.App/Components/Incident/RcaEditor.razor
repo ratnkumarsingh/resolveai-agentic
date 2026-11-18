@@ -4,7 +4,7 @@
 <div class="space-y-4 rounded-lg border border-slate-200 bg-surface p-4" data-testid="rca-editor">
     <div class="flex flex-wrap items-center gap-2">
         <AiBadge>@(Rca.LlmMode == "live" ? "AI-generated draft" : "Recorded draft") — review required</AiBadge>
-        <span class="@Ui.Cx("rounded-sm px-1.5 py-0.5 text-xs font-medium", Rca.Status == "reviewed" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700")">@Rca.Status</span>
+        <span class="@Ui.Cx("rounded-sm px-1.5 py-0.5 text-xs font-medium", string.Equals(Rca.Status, "reviewed", StringComparison.OrdinalIgnoreCase) ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700")">@Ui.StatusLabel(Rca.Status)</span>
         <span class="text-xs text-slate-500">
             v@(Rca.Version) · generated @Ui.FormatTime(Rca.GeneratedAt, true) · edited @Ui.FormatTime(Rca.UpdatedAt, true)
         </span>
@@ -52,7 +52,7 @@
 
     <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
         <Btn Variant="primary" OnClick="() => Save(null)" Disabled="@(!Dirty)">Save changes</Btn>
-        @if (Rca.Status != "reviewed")
+        @if (!string.Equals(Rca.Status, "reviewed", StringComparison.OrdinalIgnoreCase))
         {
             <Btn OnClick="@(() => Save("reviewed"))">Save &amp; mark reviewed</Btn>
         }

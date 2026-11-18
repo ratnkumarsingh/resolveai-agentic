@@ -11,15 +11,15 @@ public static class Incidents
     private const string Columns = "id, key, title, service_name, severity, status, environment, started_at, detected_at, resolved_at, description, impact_summary";
 
     /// <summary>
-    /// none: never investigated to completion. verified: a human recorded the root cause and marked the latest RCA reviewed.
+    /// none: never investigated to completion, or an open incident with no RCA draft.
+    /// verified: latest RCA was marked reviewed.
     /// pending: anything in between, i.e. AI output that no one has confirmed yet.
     /// </summary>
     private const string ReviewState = """
         CASE
           WHEN NOT EXISTS (SELECT 1 FROM investigations v WHERE v.incident_id = incidents.id AND v.status = 'completed') THEN 'none'
-          WHEN EXISTS (SELECT 1 FROM feedback f JOIN investigations v ON v.id = f.investigation_id
-                        WHERE v.incident_id = incidents.id AND f.verified_root_cause IS NOT NULL)
-           AND (SELECT r.status FROM rca_drafts r WHERE r.incident_id = incidents.id ORDER BY r.version DESC LIMIT 1) = 'reviewed' THEN 'verified'
+          WHEN LOWER(incidents.status) = 'open' AND NOT EXISTS (SELECT 1 FROM rca_drafts r WHERE r.incident_id = incidents.id) THEN 'none'
+          WHEN (SELECT r.status FROM rca_drafts r WHERE r.incident_id = incidents.id ORDER BY r.version DESC LIMIT 1) = 'reviewed' THEN 'verified'
           ELSE 'pending' END
         """;
 
@@ -38,7 +38,8 @@ public static class Incidents
         if (f.Review == "active")
         {
             where.Add("status <> 'resolved'");
-            where.Add("NOT EXISTS (SELECT 1 FROM feedback f JOIN investigations v ON v.id = f.investigation_id WHERE v.incident_id = incidents.id AND f.verified_root_cause IS NOT NULL AND (SELECT r.status FROM rca_drafts r WHERE r.incident_id = incidents.id ORDER BY r.version DESC LIMIT 1) = 'reviewed')");
+            where.Add("NOT (LOWER(incidents.status) = 'open' AND NOT EXISTS (SELECT 1 FROM rca_drafts r WHERE r.incident_id = incidents.id))");
+            where.Add("COALESCE((SELECT r.status FROM rca_drafts r WHERE r.incident_id = incidents.id ORDER BY r.version DESC LIMIT 1), '') <> 'reviewed'");
         }
         else if (f.Review is not null) { where.Add($"({ReviewState}) = @review"); args.Add("review", f.Review); }
         var clause = where.Count > 0 ? $"WHERE {string.Join(" AND ", where)}" : "";

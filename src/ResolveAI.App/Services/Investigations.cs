@@ -356,6 +356,8 @@ public static class Investigations
                     model = result.Model, summary = v.Summary, insufficient = v.InsufficientEvidence ? 1 : 0, limitations = Json.Serialize(v.Limitations), issues = Json.Serialize(issues),
                     usage = result.Usage is null ? null : Json.Serialize(result.Usage), trace = Json.Serialize(trace.Stages), now = Js.IsoNow(), id,
                 }, tx);
+            var nextIncidentStatus = v.Hypotheses.Count > 0 ? "needs_review" : "open";
+            conn.Execute("UPDATE incidents SET status = @status WHERE id = @incidentId", new { status = nextIncidentStatus, incidentId = incident.Id }, tx);
         });
     }
 
